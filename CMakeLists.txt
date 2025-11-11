@@ -16,12 +16,9 @@ include(ECMQmlModule)
 
 if(ANDROID)
 add_subdirectory(kirigami)
-endif()
 
+else()
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
-ecm_find_qmlmodule(org.kde.kirigamiaddons.delegates REQUIRED)
-ecm_find_qmlmodule(org.kde.kirigamiaddons.settings REQUIRED)
-ecm_find_qmlmodule(org.kde.kirigamiaddons.treeview REQUIRED)
 
 find_package(KF6 REQUIRED COMPONENTS
     Kirigami
@@ -30,8 +27,7 @@ find_package(KF6 REQUIRED COMPONENTS
     ItemModels
     KirigamiAddons
 )
-
-find_package(KF6 REQUIRED COMPONENTS KirigamiAddons)
+endif()
 
 qt_add_executable(notes
     main.cpp
@@ -60,8 +56,8 @@ target_link_libraries(notes PRIVATE
     Qt6::Qml
     Qt6::Quick
     
-    KF6::Kirigami
-    KF6::ItemModels
+    Kirigami
+    #ItemModels
 )
 
 if(ANDROID)
