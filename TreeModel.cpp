@@ -29,6 +29,7 @@ QHash<int, QByteArray> TreeModel::roleNames() const {
     QHash<int, QByteArray> roles;
     roles[Qt::DisplayRole] = "display";
     roles[Qt::UserRole]    = "path";
+    roles[Qt::UserRole+1]  = "isDirectory";
     return roles;
 }
 
@@ -45,6 +46,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
         return item->data();
     } else if (role == Qt::UserRole) {
         return item->path();
+    } else if (role == Qt::UserRole + 1) {
+        return item->childCount() > 0;
     }
     return {};
 }
@@ -107,11 +110,16 @@ int TreeModel::rowCount(const QModelIndex &parent) const
 
 
 void TreeModel::setPath(QString path) {
-    mPath = path;
+    QUrl url(path);
+    if (url.isValid() && url.isLocalFile()) {
+        mPath = url.toLocalFile();
+    } else {
+        mPath = path;
+    }
 
     beginResetModel();
-    rootItem = std::make_shared<TreeItem>("", path);
-    setupModelData(path, rootItem.get());
+    rootItem = std::make_shared<TreeItem>("", mPath);
+    setupModelData(mPath, rootItem.get());
     endResetModel();
 }
 

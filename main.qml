@@ -1,8 +1,9 @@
 import QtCore
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Window
+import QtQuick.Dialogs
 import org.kde.kirigami 2.20 as Kirigami
 
 import com.gstark 1.0
@@ -28,36 +29,88 @@ Kirigami.ApplicationWindow {
         path: settings.notesDir
     }
 
+    FileDialog {
+        id: testDialog
+        title: "Select a File"
+        onAccepted: {
+            console.log("Selected file:", fileDialog.fileUrl)
+        }
+        onRejected: {
+            console.log("File dialog rejected")
+        }
+    }
+
+
+    FolderDialog {
+        id: fileDialog
+        currentFolder: settings.notesDir
+        onAccepted: settings.notesDir = selectedFolder
+    }
+
+
     Kirigami.PromptDialog {
-        id: textPromptDialog
-        title: "Select Folder"
+        id: newFileDialog
+        title: "New File"
+
+        property string path: ""
 
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
-                text: "Select Folder"
+                text: "Create"
                 icon.name: "dialog-ok"
                 onTriggered: {
-                    showPassiveNotification("Open");
-                    settings.notesDir = notesDirField.text
-                    textPromptDialog.close();
+                    fileModel.createFile(newFileDialog.path, newFileName.text)
+                    mainText.text = ""
+                    treeModel.path = settings.notesDir
+                    fileTree.expand(0)
+                    newFileDialog.close();
                 }
             },
             Kirigami.Action {
                 text: "Cancel"
                 icon.name: "dialog-cancel"
                 onTriggered: {
-                    textPromptDialog.close();
+                    newFileDialog.close();
                 }
             }
         ]
         ColumnLayout {
             TextField {
-                id: notesDirField
+                id: newFileName
                 Layout.fillWidth: true
-                placeholderText: "Folder name…"
-                text: settings.notesDir
+                placeholderText: "File name…"
             }
+        }
+    }
+
+
+    Menu {
+        id: contextMenu
+        property string path: ""
+        property bool   isDirectory: false
+        property int    index: -1
+
+        MenuItem {
+            text: "New File"
+            enabled: contextMenu.isDirectory
+            onTriggered: {
+                newFileDialog.path = contextMenu.path
+                newFileDialog.open()
+            }
+        }
+        MenuItem {
+            text: "New Folder"
+            enabled: contextMenu.isDirectory
+        }
+        MenuItem {
+            text: "Delete"
+            onTriggered: {
+                fileModel.remove(contextMenu.path)
+                treeModel.path = settings.notesDir
+                fileTree.positionViewAtRow(0, TableView.Visible)
+            }
+            enabled: contextMenu.index > 0
         }
     }
 
@@ -73,7 +126,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: "Settings"
                 icon.name: "settings-configure"
-                onTriggered: textPromptDialog.open()
+                onTriggered: fileDialog.open()
             },
             Kirigami.Action {
                 text: "Journal"
@@ -105,9 +158,26 @@ Kirigami.ApplicationWindow {
                     implicitWidth: treeScrollView.width
 
                     TapHandler {
+                        acceptedButtons: Qt.RightButton
+
+                        onTapped: {
+                            contextMenu.path = model.path
+                            contextMenu.isDirectory = model.isDirectory
+                            contextMenu.index = index
+                            contextMenu.popup()
+                        }
+                    }
+
+                    TapHandler {
                         onTapped: {
                             console.log(model.path)
                             mainText.text = fileModel.open(model.path)
+                        }
+                        onLongPressed: {
+                            contextMenu.path = model.path
+                            contextMenu.isDirectory = model.isDirectory
+                            contextMenu.index = index
+                            contextMenu.popup()
                         }
                     }
                 }
@@ -127,6 +197,7 @@ Kirigami.ApplicationWindow {
                 id: mainText
                 wrapMode: TextArea.Wrap
                 placeholderText: "Write something here..."
+                //textFormat: TextEdit.MarkdownText
 
                 Shortcut {
                     sequences: [StandardKey.Save]

@@ -57,7 +57,6 @@ target_link_libraries(notes PRIVATE
     Qt6::Quick
     
     Kirigami
-    #ItemModels
 )
 
 if(ANDROID)
