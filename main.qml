@@ -20,26 +20,10 @@ Kirigami.ApplicationWindow {
         property string notesDir
     }
 
-    FileModel {
-        id: fileModel
-    }
-
     TreeModel {
         id: treeModel
         path: settings.notesDir
     }
-
-    FileDialog {
-        id: testDialog
-        title: "Select a File"
-        onAccepted: {
-            console.log("Selected file:", fileDialog.fileUrl)
-        }
-        onRejected: {
-            console.log("File dialog rejected")
-        }
-    }
-
 
     FolderDialog {
         id: fileDialog
@@ -47,31 +31,31 @@ Kirigami.ApplicationWindow {
         onAccepted: settings.notesDir = selectedFolder
     }
 
-
     Kirigami.PromptDialog {
         id: newFileDialog
-        title: "New File"
+        title: isDirectory ? "New Folder" : "New File"
 
         property string path: ""
+        property string newPath: ""
+        property bool   isDirectory: false
 
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                id: newFileDialogCreate
                 text: "Create"
                 icon.name: "dialog-ok"
                 onTriggered: {
-                    fileModel.createFile(newFileDialog.path, newFileName.text)
                     mainText.text = ""
-                    treeModel.path = settings.notesDir
-                    fileTree.expand(0)
-                    newFileDialog.close();
+                    treeModel.create(newFileDialog.path, newFileName.text, newFileDialog.isDirectory)
+                    newFileDialog.close()
                 }
             },
             Kirigami.Action {
                 text: "Cancel"
                 icon.name: "dialog-cancel"
                 onTriggered: {
-                    newFileDialog.close();
+                    newFileDialog.close()
                 }
             }
         ]
@@ -79,39 +63,65 @@ Kirigami.ApplicationWindow {
             TextField {
                 id: newFileName
                 Layout.fillWidth: true
-                placeholderText: "File name…"
+                placeholderText: newFileDialog.isDirectory ? "Folder name..." : "File name..."
+                focus: true
+                Keys.onReturnPressed: {
+                    newFileDialogCreate.trigger()
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                newFileName.forceActiveFocus()
+                console.log("is folder? ", newFileDialog.isDirectory)
             }
         }
     }
 
 
-    Menu {
+    Kirigami.MenuDialog {
         id: contextMenu
         property string path: ""
         property bool   isDirectory: false
         property int    index: -1
 
-        MenuItem {
-            text: "New File"
-            enabled: contextMenu.isDirectory
-            onTriggered: {
-                newFileDialog.path = contextMenu.path
-                newFileDialog.open()
+        title: "File Actions"
+
+        function doOpen(path, isDirectory, index) {
+            this.path = path
+            this.isDirectory = isDirectory
+            this.index = index
+            this.open()
+        }
+
+        actions: [
+            Kirigami.Action {
+                text: "New File"
+                enabled: contextMenu.isDirectory
+                onTriggered: {
+                    newFileDialog.path = contextMenu.path
+                    newFileDialog.isDirectory = false
+                    newFileDialog.open()
+                }
+            },
+            Kirigami.Action {
+                text: "New Folder"
+                enabled: contextMenu.isDirectory
+                onTriggered: {
+                    newFileDialog.path = contextMenu.path
+                    newFileDialog.isDirectory = true
+                    newFileDialog.open()
+                }
+            },
+            Kirigami.Action {
+                text: "Delete"
+                onTriggered: {
+                    treeModel.remove(contextMenu.path)
+                }
+                enabled: contextMenu.index > 0
             }
-        }
-        MenuItem {
-            text: "New Folder"
-            enabled: contextMenu.isDirectory
-        }
-        MenuItem {
-            text: "Delete"
-            onTriggered: {
-                fileModel.remove(contextMenu.path)
-                treeModel.path = settings.notesDir
-                fileTree.positionViewAtRow(0, TableView.Visible)
-            }
-            enabled: contextMenu.index > 0
-        }
+        ]
     }
 
 
@@ -152,33 +162,26 @@ Kirigami.ApplicationWindow {
                 id: fileTree
                 Layout.fillWidth: true
                 Layout.fillHeight: true 
+                alternatingRows: false
                 model: treeModel
+                selectionModel: ItemSelectionModel {}
+
                 delegate: TreeViewDelegate {
                     text: model.display
                     implicitWidth: treeScrollView.width
 
                     TapHandler {
                         acceptedButtons: Qt.RightButton
-
-                        onTapped: {
-                            contextMenu.path = model.path
-                            contextMenu.isDirectory = model.isDirectory
-                            contextMenu.index = index
-                            contextMenu.popup()
-                        }
+                        enabled: !Kirigami.Settings.isMobile
+                        onTapped: contextMenu.doOpen(model.path, model.isDirectory, index)
                     }
 
                     TapHandler {
                         onTapped: {
-                            console.log(model.path)
-                            mainText.text = fileModel.open(model.path)
+                            mainText.open(model.path)
+                            fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate)
                         }
-                        onLongPressed: {
-                            contextMenu.path = model.path
-                            contextMenu.isDirectory = model.isDirectory
-                            contextMenu.index = index
-                            contextMenu.popup()
-                        }
+                        onLongPressed: contextMenu.doOpen(model.path, model.isDirectory, index)
                     }
                 }
             }
@@ -199,10 +202,17 @@ Kirigami.ApplicationWindow {
                 placeholderText: "Write something here..."
                 //textFormat: TextEdit.MarkdownText
 
+                property string path: ""
+
+                function open(newPath) {
+                    path = newPath
+                    text = treeModel.open(newPath);
+                }
+
                 Shortcut {
                     sequences: [StandardKey.Save]
                     onActivated: {
-                        if (fileModel.save(mainText.text)) {
+                        if (treeModel.save(mainText.path, mainText.text)) {
                             showPassiveNotification("Saved");
                         } else {
                             showPassiveNotification("Failed to Save");

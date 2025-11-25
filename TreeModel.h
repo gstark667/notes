@@ -40,6 +40,13 @@ public:
     QString path() const { return mPath; }
     void setPath(QString path);
 
+    TreeItem* find(const QString path) const;
+
+    Q_INVOKABLE bool create(QString path, QString name, bool isDirectory);
+    Q_INVOKABLE bool remove(QString path);
+    Q_INVOKABLE QString open(QString path);
+    Q_INVOKABLE bool save(QString path, QString data);
+
 private:
     static void setupModelData(QString path, TreeItem *parent);
 

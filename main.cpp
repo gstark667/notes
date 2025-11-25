@@ -1,7 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include "FileModel.h"
 #include "TreeModel.h"
 
 #include <QQmlContext>
@@ -15,7 +14,6 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("gstark.com");
     app.setApplicationName("Notes");
 
-    qmlRegisterType<FileModel>("com.gstark", 1, 0, "FileModel");
     qmlRegisterType<TreeModel>("com.gstark", 1, 0, "TreeModel");
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));

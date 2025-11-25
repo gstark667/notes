@@ -1,8 +1,8 @@
 #include "TreeItem.h"
 
 
-TreeItem::TreeItem(QString data, QString path, TreeItem *parent)
-    : mData(data), mPath(path), mParentItem(parent) {}
+TreeItem::TreeItem(QString data, QString path, bool isDirectory, TreeItem *parent)
+    : mData(data), mPath(path), mIsDirectory(isDirectory), mParentItem(parent) {}
 
 
 TreeItem::~TreeItem() {
@@ -12,15 +12,37 @@ TreeItem::~TreeItem() {
 }
 
 
+void TreeItem::insertChild(TreeItem *child, size_t row)
+{
+    mChildItems.insert(mChildItems.begin() + row, child);
+}
+
+
 void TreeItem::appendChild(TreeItem *child)
 {
     mChildItems.push_back(child);
 }
 
 
+void TreeItem::removeChild(size_t row) {
+    mChildItems.erase(mChildItems.begin() + row);
+}
+
+
 TreeItem *TreeItem::child(int row)
 {
     return row >= 0 && row < childCount() ? mChildItems.at(row) : nullptr;
+}
+
+
+TreeItem *TreeItem::find(QString data)
+{
+    for (auto item: mChildItems) {
+        if (item->data() == data) {
+            return item;
+        }
+    }
+    return nullptr;
 }
 
 

@@ -31,7 +31,6 @@ endif()
 
 qt_add_executable(notes
     main.cpp
-    FileModel.cpp
     TreeModel.cpp
     TreeItem.cpp
     MANUAL_FINALIZATION
