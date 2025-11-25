@@ -46,7 +46,6 @@ Kirigami.ApplicationWindow {
                 text: "Create"
                 icon.name: "dialog-ok"
                 onTriggered: {
-                    mainText.text = ""
                     treeModel.create(newFileDialog.path, newFileName.text, newFileDialog.isDirectory)
                     newFileDialog.close()
                 }
@@ -74,7 +73,8 @@ Kirigami.ApplicationWindow {
         onVisibleChanged: {
             if (visible) {
                 newFileName.forceActiveFocus()
-                console.log("is folder? ", newFileDialog.isDirectory)
+            } else {
+                newFileName.text = ""
             }
         }
     }
@@ -178,7 +178,9 @@ Kirigami.ApplicationWindow {
 
                     TapHandler {
                         onTapped: {
-                            mainText.open(model.path)
+                            if (!model.isDirectory) {
+                                mainText.open(model.path)
+                            }
                             fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate)
                         }
                         onLongPressed: contextMenu.doOpen(model.path, model.isDirectory, index)

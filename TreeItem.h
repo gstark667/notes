@@ -11,6 +11,7 @@ public:
     explicit TreeItem(QString data, QString path, bool isDirectory, TreeItem *parentItem = nullptr);
     ~TreeItem();
 
+    size_t indexChild(TreeItem *child);
     void insertChild(TreeItem *child, size_t row);
     void appendChild(TreeItem *child);
     void removeChild(size_t row);

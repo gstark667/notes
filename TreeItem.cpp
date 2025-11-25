@@ -12,14 +12,22 @@ TreeItem::~TreeItem() {
 }
 
 
-void TreeItem::insertChild(TreeItem *child, size_t row)
-{
+size_t TreeItem::indexChild(TreeItem *child) {
+    for (size_t i = 0; i < mChildItems.size(); ++i) {
+        if (mChildItems[i]->data() > child->data()) {
+            return i;
+        }
+    }
+    return mChildItems.size();
+}
+
+
+void TreeItem::insertChild(TreeItem *child, size_t row) {
     mChildItems.insert(mChildItems.begin() + row, child);
 }
 
 
-void TreeItem::appendChild(TreeItem *child)
-{
+void TreeItem::appendChild(TreeItem *child) {
     mChildItems.push_back(child);
 }
 
@@ -29,14 +37,12 @@ void TreeItem::removeChild(size_t row) {
 }
 
 
-TreeItem *TreeItem::child(int row)
-{
+TreeItem *TreeItem::child(int row) {
     return row >= 0 && row < childCount() ? mChildItems.at(row) : nullptr;
 }
 
 
-TreeItem *TreeItem::find(QString data)
-{
+TreeItem *TreeItem::find(QString data) {
     for (auto item: mChildItems) {
         if (item->data() == data) {
             return item;
@@ -46,8 +52,7 @@ TreeItem *TreeItem::find(QString data)
 }
 
 
-int TreeItem::row() const
-{
+int TreeItem::row() const {
     if (mParentItem == nullptr)
         return 0;
     const auto it = std::find_if(mParentItem->mChildItems.cbegin(), mParentItem->mChildItems.cend(),

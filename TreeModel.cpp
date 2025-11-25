@@ -172,10 +172,10 @@ bool TreeModel::create(QString path, QString name, bool isDirectory) {
     }
 
     if (created) {
+        TreeItem *item = new TreeItem(name, filePath, isDirectory, parentItem);
+        size_t idx = parentItem->indexChild(item);
         beginInsertRows(createIndex(parentItem->row(), 0, parentItem), 0, 0);
-        parentItem->insertChild(
-            new TreeItem(name, filePath, isDirectory, parentItem),
-            0);
+        parentItem->insertChild(item, idx);
         endInsertRows();
         return true;
     } else {
@@ -262,5 +262,6 @@ void TreeModel::setupModelData(QString path, TreeItem *parent)
         }
     }
 
-    parent->appendChild(newItem);
+    size_t idx = parent->indexChild(newItem);
+    parent->insertChild(newItem, idx);
 }
