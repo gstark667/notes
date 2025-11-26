@@ -10,10 +10,14 @@ import com.gstark 1.0
 
 Kirigami.ApplicationWindow {
     id: root
-    width: 800
-    height: 600
-    visible: true
+    //width: 800
+    //height: 600
+    //visible: true
     title: "Notes"
+    flags: Qt.Window | Qt.WindowSoftInputModeAdjustResize
+
+    //Material.theme: Material.Dark
+    //Material.accent: Material.Blue
 
     Settings {
         id: settings
@@ -130,7 +134,7 @@ Kirigami.ApplicationWindow {
         title: "Menu"
         modal: Kirigami.Settings.isMobile
         collapsible: !Kirigami.Settings.isMobile
-        collapsed: false
+        collapsed: Kirigami.Settings.isMobile
 
         actions: [
             Kirigami.Action {
@@ -190,18 +194,25 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    Component.onCompleted: {
+        Qt.inputMethod.hide()
+    }
+
     Kirigami.Page {
         title: "Main Page"
         anchors.fill: parent
         anchors.leftMargin: Kirigami.Settings.isMobile ? 0 : sidebar.width
 
         ScrollView {
-            anchors.fill: parent
+            //anchors.fill: parent
+            width: parent.width
+            height: parent.height - (Qt.inputMethod.keyboardRectangle.height / Screen.devicePixelRatio)
 
             TextArea {
                 id: mainText
-                wrapMode: TextArea.Wrap
+                //wrapMode: TextArea.Wrap
                 placeholderText: "Write something here..."
+                font.pixelSize: 16
                 //textFormat: TextEdit.MarkdownText
 
                 property string path: ""
@@ -209,6 +220,37 @@ Kirigami.ApplicationWindow {
                 function open(newPath) {
                     path = newPath
                     text = treeModel.open(newPath);
+
+                    if (Kirigami.Settings.isMobile) {
+                        sidebar.collapsed = true
+                    }
+                }
+
+                /*onFocusChanged: {
+                    //console.log("asdf")
+                    //mainText.forceActiveFocus(Qt.MouseFocusReason)
+                    //Qt.inputMethod.show()
+
+                    keyboardTimer.start()
+                }*/
+
+                TapHandler {
+                    onTapped: {
+                        keyboardTimer.start()
+                    }
+                }
+
+                Timer {
+                    id: keyboardTimer
+                    interval: 60
+                    repeat: false
+                    onTriggered: {
+                        console.log("gstark isVisible ", JSON.stringify(Qt.inputMethod))
+                        //Qt.inputMethod.show()
+                        if (!Qt.inputMethod.visible) {
+                            Qt.inputMethod.show()
+                        }
+                    }
                 }
 
                 Shortcut {

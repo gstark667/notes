@@ -64,6 +64,9 @@ if(ANDROID)
         QT_ANDROID_EXTRA_LIBS
         ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/20/lib/linux/aarch64/libomp.so
     )
+    set_target_properties(notes PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/android
+    )
 endif()
 
 qt_import_qml_plugins(notes)

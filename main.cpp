@@ -4,6 +4,7 @@
 #include "TreeModel.h"
 
 #include <QQmlContext>
+#include <QWindow>
 
 int main(int argc, char *argv[])
 {

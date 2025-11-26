@@ -22,5 +22,5 @@ With all that setup, building should just need
 
 ```
 ./android_build.sh
-cmake --buidl build-android
+cmake --build build-android
 ```
