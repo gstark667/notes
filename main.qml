@@ -42,6 +42,7 @@ Kirigami.ApplicationWindow {
         property string path: ""
         property string newPath: ""
         property bool   isDirectory: false
+        property int    index: -1
 
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
@@ -51,6 +52,7 @@ Kirigami.ApplicationWindow {
                 icon.name: "dialog-ok"
                 onTriggered: {
                     treeModel.create(newFileDialog.path, newFileName.text, newFileDialog.isDirectory)
+                    fileTree.expand(newFileDialog.index)
                     newFileDialog.close()
                 }
             },
@@ -106,6 +108,7 @@ Kirigami.ApplicationWindow {
                 onTriggered: {
                     newFileDialog.path = contextMenu.path
                     newFileDialog.isDirectory = false
+                    newFileDialog.index = contextMenu.index
                     newFileDialog.open()
                 }
             },
@@ -115,6 +118,7 @@ Kirigami.ApplicationWindow {
                 onTriggered: {
                     newFileDialog.path = contextMenu.path
                     newFileDialog.isDirectory = true
+                    newFileDialog.index = contextMenu.index
                     newFileDialog.open()
                 }
             },

@@ -133,7 +133,6 @@ TreeItem* TreeModel::find(const QString path) const {
 
     while (true) {
         QFileInfo file(relative);
-        qDebug() << file.fileName() << " " << file.dir();
 
         segments.push_front(file.fileName());
 
@@ -153,14 +152,10 @@ TreeItem* TreeModel::find(const QString path) const {
 
 
 bool TreeModel::create(QString path, QString name, bool isDirectory) {
-    // insert a new file by name
-    //TreeItem *parentItem = rootItem->child(0);
-
     QDir dir(path);
     QString filePath = dir.filePath(name);
 
     TreeItem *parentItem = find(path);
-    qDebug() << "create " << filePath << " " << isDirectory << parentItem->path();
 
     bool created = false;
     
@@ -197,10 +192,8 @@ bool TreeModel::remove(QString path) {
 
     QFileInfo info(path);
     if (info.isDir()) {
-        qDebug() << "remove dir: " << path;
         removed = QDir(path).removeRecursively();
     } else {
-        qDebug() << "remove file: " << path;
         removed = QFile(path).remove();
     }
 
