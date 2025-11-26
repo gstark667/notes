@@ -29,6 +29,11 @@ Kirigami.ApplicationWindow {
         path: settings.notesDir
     }
 
+    Highlighter {
+        id: syntaxHighlighter
+        //textDocument: mainText.textDocument
+    }
+
     FolderDialog {
         id: fileDialog
         currentFolder: settings.notesDir

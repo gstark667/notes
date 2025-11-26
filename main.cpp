@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 
 #include "TreeModel.h"
+#include "Highlighter.h"
 
 #include <QQmlContext>
 #include <QWindow>
@@ -16,6 +17,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("Notes");
 
     qmlRegisterType<TreeModel>("com.gstark", 1, 0, "TreeModel");
+    qmlRegisterType<Highlighter>("com.gstark", 1, 0, "Highlighter");
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(
