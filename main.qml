@@ -31,7 +31,7 @@ Kirigami.ApplicationWindow {
 
     Highlighter {
         id: syntaxHighlighter
-        //textDocument: mainText.textDocument
+        textDocument: mainText.textDocument
     }
 
     FolderDialog {
@@ -254,8 +254,6 @@ Kirigami.ApplicationWindow {
                     interval: 60
                     repeat: false
                     onTriggered: {
-                        console.log("gstark isVisible ", JSON.stringify(Qt.inputMethod))
-                        //Qt.inputMethod.show()
                         if (!Qt.inputMethod.visible) {
                             Qt.inputMethod.show()
                         }

@@ -3,19 +3,34 @@
 
 #include <QSyntaxHighlighter>
 #include <QQmlEngine>
+#include <QQuickTextDocument>
+#include <QRegularExpression>
 
 class Highlighter;
 
 class Highlighter: public QSyntaxHighlighter {
     Q_OBJECT
     QML_NAMED_ELEMENT(Highlighter)
-    Q_DISABLE_COPY_MOVE(Highlighter)
+
+    Q_PROPERTY(QQuickTextDocument* textDocument READ textDocument WRITE setTextDocument NOTIFY textDocumentChanged)
 
 public:
 
     explicit Highlighter(QObject *parent = nullptr);
 
-    virtual void highlightBlock(const QString &text) {};
+signals:
+    void textDocumentChanged();
+    void highlightBlock(const QVariant& text);
+
+protected:
+    QQuickTextDocument* textDocument() const { return mTextDocument; };
+    void setTextDocument(QQuickTextDocument* textDocument);
+
+    virtual void highlightBlock(const QString &text);
+
+private:
+    QQuickTextDocument* mTextDocument;
+    QList<QPair<QRegularExpression, QTextCharFormat>> mFormats;
 };
 
 #endif
