@@ -12,14 +12,8 @@ import com.gstark 1.0
 
 Kirigami.ApplicationWindow {
     id: root
-    //width: 800
-    //height: 600
-    //visible: true
     title: "Notes"
     flags: Qt.Window | Qt.WindowSoftInputModeAdjustResize
-
-    //Material.theme: Material.Dark
-    //Material.accent: Material.Blue
 
     Settings {
         id: settings

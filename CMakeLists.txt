@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Widgets QuickControls2)
 
 
 find_package(ECM 6.0.0 REQUIRED NO_MODULE)
@@ -24,10 +24,6 @@ ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 
 find_package(KF6 REQUIRED COMPONENTS
     Kirigami
-    CoreAddons
-    Config
-    ItemModels
-    KirigamiAddons
 )
 endif()
 
@@ -49,18 +45,13 @@ qt_add_qml_module(notes
         org.kde.kirigami 2.20
 )
 
-qt_add_resources(notes "resources"
-    PREFIX "/"
-    FILES
-        qml/main.qml
-)
-
 target_link_libraries(notes PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
-
+    Qt6::QuickControls2
+    Qt6::Widgets
     Kirigami
 )
 

@@ -5,8 +5,6 @@
 #include <QStack>
 #include <QDirIterator>
 
-#include <iostream>
-
 
 using namespace Qt::StringLiterals;
 

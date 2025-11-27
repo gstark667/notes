@@ -14,6 +14,7 @@ cmake -B build-android -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.t
     -DQt6_DIR=$QT6_PATH/lib/cmake/Qt6 \
     -DQt6Core_DIR=$QT6_PATH/lib/cmake/Qt6Core \
     -DQt6Gui_DIR=$QT6_PATH/lib/cmake/Qt6Gui \
+    -DQt6Widgets_DIR=$QT6_PATH/lib/cmake/Qt6Widgets \
     -DQt6Qml_DIR=$QT6_PATH/lib/cmake/Qt6Qml \
     -DQt6QmlIntegration_DIR=$QT6_PATH/lib/cmake/Qt6QmlIntegration \
     -DQt6Network_DIR=$QT6_PATH/lib/cmake/Qt6Network \

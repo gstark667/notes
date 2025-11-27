@@ -10,7 +10,7 @@ class Highlighter;
 
 class Highlighter: public QSyntaxHighlighter {
     Q_OBJECT
-    QML_NAMED_ELEMENT(Highlighter)
+    QML_ELEMENT
 
     Q_PROPERTY(QQuickTextDocument* textDocument READ textDocument WRITE setTextDocument NOTIFY textDocumentChanged)
 

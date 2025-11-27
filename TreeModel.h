@@ -9,7 +9,6 @@
 #include <QVariant>
 #include <QQmlEngine>
 
-#include <filesystem>
 
 class TreeItem;
 
@@ -17,7 +16,7 @@ class TreeItem;
 class TreeModel : public QAbstractItemModel
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(TreeModel)
+    QML_ELEMENT
     Q_PROPERTY(QString path READ path WRITE setPath)
 
 public:

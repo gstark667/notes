@@ -18,11 +18,11 @@ QList<QPair<QRegularExpression, QTextCharFormat>> makeFormats() {
     QRegularExpression monospaceExpression("\\`[^\\`]+\\`");
     formats.push_back({monospaceExpression, monospaceFormat});
 
-    QTextCharFormat h1Format;
-    h1Format.setFontPointSize(24);
-    h1Format.setFontWeight(QFont::Bold);
-    QRegularExpression h1Expression("^#.+$");
-    formats.push_back({h1Expression, h1Format});
+    QTextCharFormat h3Format;
+    h3Format.setFontPointSize(16);
+    h3Format.setFontWeight(QFont::Bold);
+    QRegularExpression h3Expression("^###.+$");
+    formats.push_back({h3Expression, h3Format});
 
     QTextCharFormat h2Format;
     h2Format.setFontPointSize(20);
@@ -30,11 +30,11 @@ QList<QPair<QRegularExpression, QTextCharFormat>> makeFormats() {
     QRegularExpression h2Expression("^##.+$");
     formats.push_back({h2Expression, h2Format});
 
-    QTextCharFormat h3Format;
-    h3Format.setFontPointSize(16);
-    h3Format.setFontWeight(QFont::Bold);
-    QRegularExpression h3Expression("^###.+$");
-    formats.push_back({h3Expression, h3Format});
+    QTextCharFormat h1Format;
+    h1Format.setFontPointSize(24);
+    h1Format.setFontWeight(QFont::Bold);
+    QRegularExpression h1Expression("^#.+$");
+    formats.push_back({h1Expression, h1Format});
 
     return formats;
 }
