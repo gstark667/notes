@@ -5,6 +5,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 
 
@@ -16,7 +19,6 @@ include(ECMQmlModule)
 
 if(ANDROID)
 add_subdirectory(kirigami)
-
 else()
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 
@@ -38,16 +40,19 @@ qt_add_executable(notes
 )
 
 qt_add_qml_module(notes
-    URI KirigamiDemo
+    URI notes
     VERSION 1.0
     QML_FILES
-        main.qml
+        qml/main.qml
+    IMPORTS
+        QtQuick.Controls 2.15
+        org.kde.kirigami 2.20
 )
 
 qt_add_resources(notes "resources"
     PREFIX "/"
     FILES
-        main.qml
+        qml/main.qml
 )
 
 target_link_libraries(notes PRIVATE
@@ -55,13 +60,13 @@ target_link_libraries(notes PRIVATE
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
-    
+
     Kirigami
 )
 
 if(ANDROID)
     # add libomp to the apk since qt doesn't bring it in automatically
-    set_target_properties(notes PROPERTIES 
+    set_target_properties(notes PROPERTIES
         QT_ANDROID_EXTRA_LIBS
         ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/20/lib/linux/aarch64/libomp.so
     )

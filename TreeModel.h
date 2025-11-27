@@ -46,6 +46,7 @@ public:
     Q_INVOKABLE bool remove(QString path);
     Q_INVOKABLE QString open(QString path);
     Q_INVOKABLE bool save(QString path, QString data);
+    Q_INVOKABLE QString getName(QString path) const;
 
 private:
     static void setupModelData(QString path, TreeItem *parent);

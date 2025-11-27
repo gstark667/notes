@@ -2,3 +2,5 @@ build/
 build-android/
 kirigami/
 .qmllint.ini
+.qmlls.ini
+.cache/

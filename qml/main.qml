@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtCore
 import QtQuick
 import QtQuick.Controls
@@ -46,8 +48,8 @@ Kirigami.ApplicationWindow {
 
         property string path: ""
         property string newPath: ""
-        property bool   isDirectory: false
-        property int    index: -1
+        property bool isDirectory: false
+        property int index: -1
 
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
@@ -56,16 +58,16 @@ Kirigami.ApplicationWindow {
                 text: "Create"
                 icon.name: "dialog-ok"
                 onTriggered: {
-                    treeModel.create(newFileDialog.path, newFileName.text, newFileDialog.isDirectory)
-                    fileTree.expand(newFileDialog.index)
-                    newFileDialog.close()
+                    treeModel.create(newFileDialog.path, newFileName.text, newFileDialog.isDirectory);
+                    fileTree.expand(newFileDialog.index);
+                    newFileDialog.close();
                 }
             },
             Kirigami.Action {
                 text: "Cancel"
                 icon.name: "dialog-cancel"
                 onTriggered: {
-                    newFileDialog.close()
+                    newFileDialog.close();
                 }
             }
         ]
@@ -76,34 +78,33 @@ Kirigami.ApplicationWindow {
                 placeholderText: newFileDialog.isDirectory ? "Folder name..." : "File name..."
                 focus: true
                 Keys.onReturnPressed: {
-                    newFileDialogCreate.trigger()
+                    newFileDialogCreate.trigger();
                 }
             }
         }
 
         onVisibleChanged: {
             if (visible) {
-                newFileName.forceActiveFocus()
+                newFileName.forceActiveFocus();
             } else {
-                newFileName.text = ""
+                newFileName.text = "";
             }
         }
     }
 
-
     Kirigami.MenuDialog {
         id: contextMenu
         property string path: ""
-        property bool   isDirectory: false
-        property int    index: -1
+        property bool isDirectory: false
+        property int index: -1
 
         title: "File Actions"
 
         function doOpen(path, isDirectory, index) {
-            this.path = path
-            this.isDirectory = isDirectory
-            this.index = index
-            this.open()
+            this.path = path;
+            this.isDirectory = isDirectory;
+            this.index = index;
+            this.open();
         }
 
         actions: [
@@ -111,34 +112,33 @@ Kirigami.ApplicationWindow {
                 text: "New File"
                 enabled: contextMenu.isDirectory
                 onTriggered: {
-                    newFileDialog.path = contextMenu.path
-                    newFileDialog.isDirectory = false
-                    newFileDialog.index = contextMenu.index
-                    newFileDialog.open()
+                    newFileDialog.path = contextMenu.path;
+                    newFileDialog.isDirectory = false;
+                    newFileDialog.index = contextMenu.index;
+                    newFileDialog.open();
                 }
             },
             Kirigami.Action {
                 text: "New Folder"
                 enabled: contextMenu.isDirectory
                 onTriggered: {
-                    newFileDialog.path = contextMenu.path
-                    newFileDialog.isDirectory = true
-                    newFileDialog.index = contextMenu.index
-                    newFileDialog.open()
+                    newFileDialog.path = contextMenu.path;
+                    newFileDialog.isDirectory = true;
+                    newFileDialog.index = contextMenu.index;
+                    newFileDialog.open();
                 }
             },
             Kirigami.Action {
                 text: "Delete"
                 onTriggered: {
-                    treeModel.remove(contextMenu.path)
+                    treeModel.remove(contextMenu.path);
                 }
                 enabled: contextMenu.index > 0
             }
         ]
     }
 
-
-    Kirigami.GlobalDrawer {
+    globalDrawer: Kirigami.GlobalDrawer {
         id: sidebar
         title: "Menu"
         modal: Kirigami.Settings.isMobile
@@ -166,6 +166,12 @@ Kirigami.ApplicationWindow {
             }
         ]
 
+        onDrawerOpenChanged: {
+            if (drawerOpen) {
+                mainText.focus = false;
+            }
+        }
+
         ColumnLayout {
             id: treeScrollView
             clip: true
@@ -174,7 +180,7 @@ Kirigami.ApplicationWindow {
             TreeView {
                 id: fileTree
                 Layout.fillWidth: true
-                Layout.fillHeight: true 
+                Layout.fillHeight: true
                 alternatingRows: false
                 model: treeModel
                 selectionModel: ItemSelectionModel {}
@@ -192,9 +198,9 @@ Kirigami.ApplicationWindow {
                     TapHandler {
                         onTapped: {
                             if (!model.isDirectory) {
-                                mainText.open(model.path)
+                                mainText.open(model.path);
                             }
-                            fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate)
+                            fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate);
                         }
                         onLongPressed: contextMenu.doOpen(model.path, model.isDirectory, index)
                     }
@@ -204,48 +210,78 @@ Kirigami.ApplicationWindow {
     }
 
     Component.onCompleted: {
-        Qt.inputMethod.hide()
+        Qt.inputMethod.hide();
     }
 
+    pageStack.initialPage: [editorPage]
+
     Kirigami.Page {
+        id: editorPage
         title: "Main Page"
-        anchors.fill: parent
-        anchors.leftMargin: Kirigami.Settings.isMobile ? 0 : sidebar.width
+
+        width: parent.width
+        height: parent.height
+
+        footer: ColumnLayout {
+            width: parent.width
+            Kirigami.NavigationTabBar {
+                implicitWidth: parent.width
+                actions: [
+                    Kirigami.Action {
+                        id: saveAction
+                        text: "Save"
+                        icon.name: "save"
+                        onTriggered: mainText.save()
+                    },
+                    Kirigami.Action {
+                        text: "Reload"
+                        icon.name: "reload"
+                        onTriggered: mainText.reload()
+                    }
+                ]
+            }
+            Rectangle {
+                implicitWidth: parent.width
+                implicitHeight: Qt.inputMethod.keyboardRectangle.height / Screen.devicePixelRatio - 20
+            }
+        }
 
         ScrollView {
-            //anchors.fill: parent
             width: parent.width
-            height: parent.height - (Qt.inputMethod.keyboardRectangle.height / Screen.devicePixelRatio)
+            height: parent.height
 
             TextArea {
                 id: mainText
-                //wrapMode: TextArea.Wrap
                 placeholderText: "Write something here..."
-                font.pixelSize: 16
-                //textFormat: TextEdit.MarkdownText
+                font.pixelSize: 12
 
                 property string path: ""
 
                 function open(newPath) {
-                    path = newPath
+                    path = newPath;
                     text = treeModel.open(newPath);
+                    editorPage.title = treeModel.getName(newPath);
 
                     if (Kirigami.Settings.isMobile) {
-                        sidebar.collapsed = true
+                        sidebar.drawerOpen = false;
                     }
                 }
 
-                /*onFocusChanged: {
-                    //console.log("asdf")
-                    //mainText.forceActiveFocus(Qt.MouseFocusReason)
-                    //Qt.inputMethod.show()
+                function save() {
+                    if (treeModel.save(mainText.path, mainText.text)) {
+                        root.showPassiveNotification("Saved");
+                    } else {
+                        root.showPassiveNotification("Failed to Save");
+                    }
+                }
 
-                    keyboardTimer.start()
-                }*/
+                function reload() {
+                    open(path);
+                }
 
                 TapHandler {
                     onTapped: {
-                        keyboardTimer.start()
+                        keyboardTimer.start();
                     }
                 }
 
@@ -255,20 +291,14 @@ Kirigami.ApplicationWindow {
                     repeat: false
                     onTriggered: {
                         if (!Qt.inputMethod.visible) {
-                            Qt.inputMethod.show()
+                            Qt.inputMethod.show();
                         }
                     }
                 }
 
                 Shortcut {
                     sequences: [StandardKey.Save]
-                    onActivated: {
-                        if (treeModel.save(mainText.path, mainText.text)) {
-                            showPassiveNotification("Saved");
-                        } else {
-                            showPassiveNotification("Failed to Save");
-                        }
-                    }
+                    onActivated: mainText.save()
                 }
             }
         }

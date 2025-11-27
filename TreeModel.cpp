@@ -158,7 +158,7 @@ bool TreeModel::create(QString path, QString name, bool isDirectory) {
     TreeItem *parentItem = find(path);
 
     bool created = false;
-    
+
     if (isDirectory) {
         created = dir.mkdir(name);
     } else {
@@ -235,6 +235,12 @@ bool TreeModel::save(QString path, QString data) {
     out << data;
 
     return true;
+}
+
+
+QString TreeModel::getName(QString path) const {
+    QFileInfo file(path);
+    return file.baseName();
 }
 
 
