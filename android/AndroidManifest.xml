@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.qtproject.example.notes"
+    package="com.gstark.notes"
     android:installLocation="auto"
     android:versionCode="1"
     android:versionName="1.0"
@@ -27,10 +27,11 @@
             android:name="org.qtproject.qt.android.bindings.QtActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:label="notes"
-            android:launchMode="singleTop"
+            android:launchMode="standard"
             android:screenOrientation="unspecified"
             android:exported="true"
-            android:windowSoftInputMode="adjustPan|stateVisible"
+            android:windowSoftInputMode="adjustResize"
+            android:enableOnBackInvokedCallback="false"
         >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

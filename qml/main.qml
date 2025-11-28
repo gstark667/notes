@@ -6,14 +6,14 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
 import QtQuick.Dialogs
-import org.kde.kirigami 2.20 as Kirigami
+import org.kde.kirigami as Kirigami
 
-import com.gstark 1.0
+import com.gstark
 
 Kirigami.ApplicationWindow {
     id: root
     title: "Notes"
-    flags: Qt.Window | Qt.WindowSoftInputModeAdjustResize
+    flags: Qt.Window
 
     Settings {
         id: settings
@@ -186,7 +186,7 @@ Kirigami.ApplicationWindow {
                     TapHandler {
                         acceptedButtons: Qt.RightButton
                         enabled: !Kirigami.Settings.isMobile
-                        onTapped: contextMenu.doOpen(model.path, model.isDirectory, index)
+                        onTapped: contextMenu.doOpen(model.path, model.isDirectory, model.index)
                     }
 
                     TapHandler {
@@ -196,15 +196,11 @@ Kirigami.ApplicationWindow {
                             }
                             fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate);
                         }
-                        onLongPressed: contextMenu.doOpen(model.path, model.isDirectory, index)
+                        onLongPressed: contextMenu.doOpen(model.path, model.isDirectory, model.index)
                     }
                 }
             }
         }
-    }
-
-    Component.onCompleted: {
-        Qt.inputMethod.hide();
     }
 
     pageStack.initialPage: [editorPage]
@@ -234,20 +230,20 @@ Kirigami.ApplicationWindow {
                     }
                 ]
             }
-            Rectangle {
-                implicitWidth: parent.width
-                implicitHeight: Qt.inputMethod.keyboardRectangle.height / Screen.devicePixelRatio - 20
-            }
         }
 
         ScrollView {
-            width: parent.width
-            height: parent.height
+            anchors.fill: parent
+            focusPolicy: Qt.NoFocus
 
             TextArea {
                 id: mainText
                 placeholderText: "Write something here..."
                 font.pixelSize: 12
+                wrapMode: TextEdit.Wrap
+                //focusPolicy: Qt.ClickFocus
+                onPressed: forceActiveFocus()
+                inputMethodHints: Qt.ImhMultiLine | Qt.ImhNoPredictiveText
 
                 property string path: ""
 
@@ -273,21 +269,8 @@ Kirigami.ApplicationWindow {
                     open(path);
                 }
 
-                TapHandler {
-                    onTapped: {
-                        keyboardTimer.start();
-                    }
-                }
-
-                Timer {
-                    id: keyboardTimer
-                    interval: 60
-                    repeat: false
-                    onTriggered: {
-                        if (!Qt.inputMethod.visible) {
-                            Qt.inputMethod.show();
-                        }
-                    }
+                onActiveFocusChanged: {
+                    console.log("gstark focus event", focus, Qt.inputMethod.visible);
                 }
 
                 Shortcut {

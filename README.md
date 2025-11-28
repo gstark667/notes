@@ -13,13 +13,11 @@ cmake --build build
 ```
 
 ## Android
-I'm currently just checking out kirigami in the root of this repo (I'll probably add it as a submodule eventually).
-Android Sdk/Ndk are in ~/Android. I'm using 29.0.13599879 at the moment
-My android build for qt6 is located in ../qt-android-install (from the repo root)
-
-With all that setup, building should just need
+The android build is now handled by a docker image with qt, ecm, and kirigami installed.
+Building should just need:
 
 ```
 ./android_build.sh
-cmake --build build-android
 ```
+
+And then everything will show up inside build-android/

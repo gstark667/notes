@@ -2,9 +2,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include "TreeModel.h"
-#include "Highlighter.h"
-
 #include <QQmlContext>
 #include <QWindow>
 #include <QtQuickControls2/QQuickStyle>
@@ -18,6 +15,7 @@ int main(int argc, char *argv[])
     #ifdef Q_OS_ANDROID
         QQuickStyle::setStyle("Material");
         qputenv("QT_QUICK_CONTROLS_MATERIAL_THEME", "System");
+        qputenv("QT_LOGGING_RULES", "qt.qpa.input=true;qt.quick.focus=true");
     #endif
 
     QApplication app(argc, argv);
@@ -27,10 +25,7 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("gstark.com");
     app.setApplicationName("Notes");
 
-    qmlRegisterType<TreeModel>("com.gstark", 1, 0, "TreeModel");
-    qmlRegisterType<Highlighter>("com.gstark", 1, 0, "Highlighter");
-
-    const QUrl url(QStringLiteral("qrc:/qt/qml/notes/qml/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/qt/qml/com/gstark/qml/main.qml"));
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreated,
