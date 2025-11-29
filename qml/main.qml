@@ -18,6 +18,9 @@ Kirigami.ApplicationWindow {
     Settings {
         id: settings
         property string notesDir
+        property string webdavUrl
+        property string webdavUsername
+        property string webdavPassword
     }
 
     TreeModel {
@@ -28,6 +31,10 @@ Kirigami.ApplicationWindow {
     Highlighter {
         id: syntaxHighlighter
         textDocument: mainText.textDocument
+    }
+
+    Syncer {
+        id: syncer
     }
 
     FolderDialog {
@@ -82,6 +89,80 @@ Kirigami.ApplicationWindow {
                 newFileName.forceActiveFocus();
             } else {
                 newFileName.text = "";
+            }
+        }
+    }
+
+    Kirigami.PromptDialog {
+        id: settingsMenu
+        title: "Settings"
+
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: "Accept"
+                icon.name: "dialog-ok"
+                onTriggered: {
+                    settings.webdavUrl = webdavUrlField.text;
+                    settings.webdavUsername = webdavUsernameField.text;
+                    settings.webdavPassword = webdavPasswordField.text;
+                    syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);
+                    settingsMenu.close();
+                }
+            },
+            Kirigami.Action {
+                text: "Cancel"
+                icon.name: "dialog-cancel"
+                onTriggered: {
+                    webdavUrlField.text = settings.webdavUrl;
+                    webdavUsernameField.text = settings.webdavUsername;
+                    webdavPasswordField.text = settings.webdavPassword;
+                    settingsMenu.close();
+                }
+            }
+        ]
+
+        ColumnLayout {
+            // WebDAV
+            Kirigami.FormLayout {
+                Layout.fillWidth: true
+                Kirigami.Separator {
+                    Kirigami.FormData.isSection: true
+                    Kirigami.FormData.label: "WebDAV Settings"
+                }
+                TextField {
+                    id: webdavUrlField
+                    Kirigami.FormData.label: "URL:"
+                    text: settings.webdavUrl
+                    placeholderText: "https://example.com/webdav"
+                }
+                TextField {
+                    id: webdavUsernameField
+                    Kirigami.FormData.label: "Username:"
+                    text: settings.webdavUsername
+                    placeholderText: "username"
+                }
+                TextField {
+                    id: webdavPasswordField
+                    Kirigami.FormData.label: "Password:"
+                    text: settings.webdavPassword
+                    placeholderText: "password"
+                    echoMode: TextInput.Password
+                }
+            }
+
+            // Notes directory
+            Kirigami.FormLayout {
+                Layout.fillWidth: true
+                Kirigami.Separator {
+                    Kirigami.FormData.isSection: true
+                    Kirigami.FormData.label: "Notes Directory"
+                }
+                Button {
+                    text: "Select Directory"
+                    icon.name: "folder-open"
+                    onClicked: fileDialog.open()
+                }
             }
         }
     }
@@ -143,7 +224,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: "Settings"
                 icon.name: "settings-configure"
-                onTriggered: fileDialog.open()
+                onTriggered: settingsMenu.open()
             },
             Kirigami.Action {
                 text: "Journal"
@@ -269,10 +350,6 @@ Kirigami.ApplicationWindow {
                     open(path);
                 }
 
-                onActiveFocusChanged: {
-                    console.log("gstark focus event", focus, Qt.inputMethod.visible);
-                }
-
                 Shortcut {
                     sequences: [StandardKey.Save]
                     onActivated: mainText.save()
@@ -280,4 +357,8 @@ Kirigami.ApplicationWindow {
             }
         }
     }
+
+    /*Component.onCompleted: {
+        syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);
+        }*/
 }

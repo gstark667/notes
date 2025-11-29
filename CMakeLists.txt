@@ -12,6 +12,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Widgets QuickControls2)
 
 find_package(ECM REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+set(BUILD_WITH_QT6 ON)
 
 include(ECMFindQmlModule)
 include(ECMQmlModule)
@@ -22,9 +23,13 @@ find_package(KF6 REQUIRED COMPONENTS
     Kirigami
 )
 
+
+add_subdirectory(QtWebDAV)
+
 qt_add_executable(notes
     main.cpp
     Highlighter.cpp
+    Syncer.cpp
     TreeModel.cpp
     TreeItem.cpp
     MANUAL_FINALIZATION
@@ -49,6 +54,7 @@ target_link_libraries(notes PRIVATE
     Qt6::QuickControls2
     Qt6::Widgets
     KF6::Kirigami
+    QtWebDAV
 )
 
 if(ANDROID)
