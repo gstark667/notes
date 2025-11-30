@@ -26,7 +26,9 @@ Kirigami.ApplicationWindow {
     TreeModel {
         id: treeModel
         path: settings.notesDir
-        onPathChanged: function(path) { syncer.path = path; }
+        onPathChanged: function (path) {
+            syncer.path = path;
+        }
     }
 
     Highlighter {
@@ -234,6 +236,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: "Sync"
                 icon.name: "folder-sync"
+                onTriggered: syncer.sync()
             },
             Kirigami.Action {
                 text: "Collapse"
@@ -359,7 +362,7 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    /*Component.onCompleted: {
+    Component.onCompleted: {
         syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);
-        }*/
+    }
 }

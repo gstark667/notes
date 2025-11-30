@@ -23,7 +23,6 @@ find_package(KF6 REQUIRED COMPONENTS
     Kirigami
 )
 
-
 add_subdirectory(QtWebDAV)
 
 qt_add_executable(notes

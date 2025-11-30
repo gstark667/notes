@@ -25,6 +25,9 @@ void Syncer::open(QString url, QString username, QString password) {
     }
 
     mWebdav.setConnectionSettings(connType, qurl.host(), qurl.path(), mUsername, mPassword, 443);
+}
+
+void Syncer::sync() {
     mParser.listDirectory(&mWebdav, "/", true);
 }
 
@@ -34,7 +37,7 @@ void Syncer::finished() {
     QList<QWebdavItem> list = mParser.getList();
     QWebdavItem item;
     foreach(item, list) {
-        qDebug() << item.name() << " " << item.path();
+        qDebug() << item.name() << " " << item.path() << item.lastModifiedStr();
         QString remotePath = item.path();
         // I don't like this, but slice the preceeding / from the path
         if (remotePath[0] == '/') {
@@ -44,20 +47,28 @@ void Syncer::finished() {
         remoteLastModified.setTimeZone(QTimeZone::UTC);
         QString localPath = QDir(mLocalRoot).filePath(remotePath);
         QFileInfo fileInfo(localPath);
+        QDateTime localLastModified = QDateTime::fromSecsSinceEpoch(fileInfo.lastModified().toSecsSinceEpoch());
         // check modified times
         // TODO: store last sync time to detect conflicts when both were edited
         qDebug() << localPath << remoteLastModified << fileInfo.lastModified();
-        if (remoteLastModified > fileInfo.lastModified()) {
+        if (remoteLastModified > localLastModified) {
             // pull remote file
             qDebug() << "pulling remote" << item.path();
             QNetworkReply *reply = mWebdav.get(item.path());
             connect(reply, SIGNAL(readyRead()), this, SLOT(itemRead()));
-        } else if (remoteLastModified < fileInfo.lastModified()) {
+        } else if (remoteLastModified < localLastModified) {
             // push local file to remote
             QFile file(localPath);
-            qDebug() << "pushing local" << item.path();
+            qDebug() << "pushing local" << item.path() << fileInfo.lastModified();
             if (file.open(QIODevice::ReadOnly)) {
-                QNetworkReply *reply = mWebdav.put(item.path(), file.readAll(), fileInfo.lastModified());
+                /*QWebdav::PropValues props;
+                QMap<QString, QVariant> davProps;
+                davProps["lastmodified"] = 1712426039;
+                props["DAV:"] = davProps;*/
+
+                //qDebug() << "test time" << myDateTime;
+                QNetworkReply *reply = mWebdav.put(item.path(), file.readAll(), localLastModified);
+                //QNetworkReply *reply = mWebdav.proppatch(item.path(), props);
                 connect(reply, SIGNAL(finished()), this, SLOT(itemWritten()));
             }
         }
@@ -100,20 +111,31 @@ void Syncer::itemRead()
     if (info.lastModified() < lastModified) {
         if (file.open(QIODevice::WriteOnly)) {// | QIODevice::Text)) {
             file.write(reply->readAll());
-            qDebug() << "setting file time" << localPath << lastModified;
-            file.setFileTime(lastModified, QFileDevice::FileModificationTime);
+            qDebug() << "setting file time" << localPath << lastModified << info.lastModified();
+            if (!file.setFileTime(lastModified, QFileDevice::FileModificationTime)) {
+                qDebug() << "failed to update time";
+            }
             file.close();
         } else {
             qWarning("Failed to open file: %s", qUtf8Printable(localPath));
         }
     }
+
+    // QFile testFile(localPath);
+    // if (file.open(QIODevice::ReadOnly)) {
+    //     qDebug() << "getting file time" << info.lastModified();
+    //     if (!file.setFileTime(lastModified, QFileDevice::FileModificationTime)) {
+    //         qDebug() << "failed to update time";
+    //     }
+    // }
+    // file.close();
 }
 
 void Syncer::itemWritten() {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
     if (reply == 0)
         return;
-    qDebug() << "itemWritten" << reply->url().path();
+    qDebug() << "itemWritten" << reply->url().path() << reply->readAll();
 }
 
 void Syncer::error(QString message) {

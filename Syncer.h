@@ -17,6 +17,7 @@ public:
     explicit Syncer(QObject *parent = nullptr);
 
     Q_INVOKABLE void open(QString url, QString username, QString password);
+    Q_INVOKABLE void sync();
 
     void setPath(QString path) { mLocalRoot = path; };
 
