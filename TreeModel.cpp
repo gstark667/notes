@@ -119,6 +119,8 @@ void TreeModel::setPath(QString path) {
     rootItem = std::make_shared<TreeItem>("", mPath, true);
     setupModelData(mPath, rootItem.get());
     endResetModel();
+
+    emit pathChanged(mPath);
 }
 
 

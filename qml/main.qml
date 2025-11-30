@@ -26,6 +26,7 @@ Kirigami.ApplicationWindow {
     TreeModel {
         id: treeModel
         path: settings.notesDir
+        onPathChanged: function(path) { syncer.path = path; }
     }
 
     Highlighter {

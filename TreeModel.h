@@ -17,7 +17,7 @@ class TreeModel : public QAbstractItemModel
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(QString path READ path WRITE setPath)
+    Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
 
 public:
     Q_DISABLE_COPY_MOVE(TreeModel)
@@ -46,6 +46,9 @@ public:
     Q_INVOKABLE QString open(QString path);
     Q_INVOKABLE bool save(QString path, QString data);
     Q_INVOKABLE QString getName(QString path) const;
+
+signals:
+    void pathChanged(QString path);
 
 private:
     static void setupModelData(QString path, TreeItem *parent);
