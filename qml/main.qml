@@ -38,6 +38,9 @@ Kirigami.ApplicationWindow {
 
     Syncer {
         id: syncer
+        onFileCreated: function (path) {
+            treeModel.createFile(path);
+        }
     }
 
     FolderDialog {

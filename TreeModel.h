@@ -47,6 +47,9 @@ public:
     Q_INVOKABLE bool save(QString path, QString data);
     Q_INVOKABLE QString getName(QString path) const;
 
+public slots:
+    void createFile(QString path);
+
 signals:
     void pathChanged(QString path);
 

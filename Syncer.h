@@ -23,6 +23,9 @@ public:
 
     QString toLocalPath(QString remotePath);
 
+signals:
+    void fileCreated(QString path);
+
 public slots:
     void finished();
     void itemRead();

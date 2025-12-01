@@ -124,11 +124,8 @@ void TreeModel::setPath(QString path) {
 }
 
 
-TreeItem* TreeModel::find(const QString path) const {
-    QDir dir(mPath);
-    dir.cdUp();
-    QString relative = dir.relativeFilePath(path);
-
+QList<QString> splitPath(const QString path) {
+    QString relative = path;
     QList<QString> segments;
 
     while (true) {
@@ -141,6 +138,17 @@ TreeItem* TreeModel::find(const QString path) const {
         }
         relative = file.dir().path();
     }
+
+    return segments;
+}
+
+
+TreeItem* TreeModel::find(const QString path) const {
+    QDir dir(mPath);
+    dir.cdUp();
+    QString relative = dir.relativeFilePath(path);
+
+    QList<QString> segments = splitPath(relative);
 
     TreeItem *curr = rootItem.get();
     for (auto segment: segments) {
@@ -263,4 +271,24 @@ void TreeModel::setupModelData(QString path, TreeItem *parent)
 
     size_t idx = parent->indexChild(newItem);
     parent->insertChild(newItem, idx);
+}
+
+
+void TreeModel::createFile(QString path) {
+    // TODO: merge this with create
+    auto items = splitPath(path);
+    TreeItem *curr = rootItem->child(0);
+    for (size_t i = 0; i < items.size(); ++i) {
+        TreeItem *next = curr->find(items[i]);
+        if (next == nullptr) {
+            next = new TreeItem(items[i], QDir(curr->path()).filePath(items[i]), i != (items.size()-1), curr);
+
+            size_t idx = curr->indexChild(next);
+            beginInsertRows(createIndex(curr->row(), 0, curr), idx, idx);
+            curr->insertChild(next, idx);
+            endInsertRows();
+        }
+
+        curr = next;
+    }
 }

@@ -89,19 +89,14 @@ void Syncer::itemRead()
     QString localPath = toLocalPath(reply->url().path());
     QFileInfo info(localPath);
     QDir parentDir = info.dir();
+    bool fileWasCreated = false;
 
     if (!parentDir.exists()) {
-        qDebug() << "making path" << parentDir;
         parentDir.mkpath(".");
     }
-    //qDebug() << reply->url().toString(QUrl::RemoveUserInfo) << ":" <<
-        // example get path in dir
-        //relativePath << ":" << mLocalRoot << ":" << localPath; //ba;
-    // example get modification time
-    QDateTime lastModified = reply->header(QNetworkRequest::LastModifiedHeader).toDateTime();
-    //qDebug() << reply->headers();
-    //qDebug() << lastModified; //<< " " << QDateTime::fromString(lastModified);//, Qt::RFC2822Date);
+    fileWasCreated = !info.exists();
 
+    QDateTime lastModified = reply->header(QNetworkRequest::LastModifiedHeader).toDateTime();
 
     QFile file(localPath);
     // remote we updated more recently than local, pull the file
@@ -118,17 +113,13 @@ void Syncer::itemRead()
             file.close();
         } else {
             qWarning("Failed to open file: %s", qUtf8Printable(localPath));
+            fileWasCreated = false;
         }
     }
 
-    // QFile testFile(localPath);
-    // if (file.open(QIODevice::ReadOnly)) {
-    //     qDebug() << "getting file time" << info.lastModified();
-    //     if (!file.setFileTime(lastModified, QFileDevice::FileModificationTime)) {
-    //         qDebug() << "failed to update time";
-    //     }
-    // }
-    // file.close();
+    if (fileWasCreated) {
+        emit fileCreated(QDir(mRootPath).relativeFilePath(reply->url().path()));
+    }
 }
 
 void Syncer::itemWritten() {
