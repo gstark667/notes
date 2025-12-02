@@ -25,9 +25,12 @@ public:
 
 signals:
     void fileCreated(QString path);
+    void fileUpdated(QString path);
 
 public slots:
     void finished();
+    //void getFile(QString path);
+    void putFile(QString path);
     void itemRead();
     void itemWritten();
     void error(QString message);
@@ -35,6 +38,8 @@ public slots:
 private:
     QWebdav mWebdav;
     QWebdavDirParser mParser;
+
+    QSettings mSettings;
 
     QString mHost;
     QString mUrl;

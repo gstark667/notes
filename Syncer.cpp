@@ -2,8 +2,13 @@
 #include "qwebdav.h"
 #include <qnetworkreply.h>
 #include <qobject.h>
+#include <qurl.h>
+
+#include <QtMinMax>
 
 Syncer::Syncer(QObject *parent): QObject(parent) {
+    mSettings.beginGroup("syncs");
+
     connect(&mParser, SIGNAL(finished()), this, SLOT(finished()));
     connect(&mParser, SIGNAL(errorChanged(QString)), this, SLOT(error(QString)));
     connect(&mWebdav, SIGNAL(errorChanged(QString)), this, SLOT(error(QString)));
@@ -48,30 +53,39 @@ void Syncer::finished() {
         QString localPath = QDir(mLocalRoot).filePath(remotePath);
         QFileInfo fileInfo(localPath);
         QDateTime localLastModified = QDateTime::fromSecsSinceEpoch(fileInfo.lastModified().toSecsSinceEpoch());
+        qint64 syncTime = mSettings.value(remotePath, 0).toLongLong();
         // check modified times
         // TODO: store last sync time to detect conflicts when both were edited
         qDebug() << localPath << remoteLastModified << fileInfo.lastModified();
-        if (remoteLastModified > localLastModified) {
+        // we need to pull the remote file if it's newer or we have a merge conflict
+        if (remoteLastModified > localLastModified || (
+                remoteLastModified.toSecsSinceEpoch() > syncTime &&
+                localLastModified.toSecsSinceEpoch() > syncTime)) {
             // pull remote file
             qDebug() << "pulling remote" << item.path();
             QNetworkReply *reply = mWebdav.get(item.path());
             connect(reply, SIGNAL(readyRead()), this, SLOT(itemRead()));
         } else if (remoteLastModified < localLastModified) {
-            // push local file to remote
-            QFile file(localPath);
-            qDebug() << "pushing local" << item.path() << fileInfo.lastModified();
-            if (file.open(QIODevice::ReadOnly)) {
-                /*QWebdav::PropValues props;
-                QMap<QString, QVariant> davProps;
-                davProps["lastmodified"] = 1712426039;
-                props["DAV:"] = davProps;*/
-
-                //qDebug() << "test time" << myDateTime;
-                QNetworkReply *reply = mWebdav.put(item.path(), file.readAll(), localLastModified);
-                //QNetworkReply *reply = mWebdav.proppatch(item.path(), props);
-                connect(reply, SIGNAL(finished()), this, SLOT(itemWritten()));
-            }
+            putFile(localPath);
         }
+    }
+}
+
+void Syncer::putFile(QString path) {
+    QFileInfo info(path);
+    QFile file(path);
+    QString remotePath = QDir(mLocalRoot).relativeFilePath(path);
+    if (file.open(QIODevice::ReadOnly)) {
+        /*QWebdav::PropValues props;
+        QMap<QString, QVariant> davProps;
+        davProps["lastmodified"] = 1712426039;
+        props["DAV:"] = davProps;*/
+
+        //qDebug() << "test time" << myDateTime;
+        QNetworkReply *reply = mWebdav.put("/" + remotePath, file.readAll(), info.lastModified());
+        mSettings.setValue(remotePath, info.lastModified().toSecsSinceEpoch());
+        //QNetworkReply *reply = mWebdav.proppatch(item.path(), props);
+        connect(reply, SIGNAL(finished()), this, SLOT(itemWritten()));
     }
 }
 
@@ -86,9 +100,11 @@ void Syncer::itemRead()
     if (reply == 0)
         return;
 
-    QString localPath = toLocalPath(reply->url().path());
+    QString relativePath = QDir(mRootPath).relativeFilePath(reply->url().path());
+    QString localPath = QDir(mLocalRoot).filePath(relativePath);
     QFileInfo info(localPath);
     QDir parentDir = info.dir();
+    QByteArray remoteData = reply->readAll();
     bool fileWasCreated = false;
 
     if (!parentDir.exists()) {
@@ -98,19 +114,41 @@ void Syncer::itemRead()
 
     QDateTime lastModified = reply->header(QNetworkRequest::LastModifiedHeader).toDateTime();
 
+    qint64 syncTime = mSettings.value(relativePath, 0).toLongLong();
+
     QFile file(localPath);
-    // remote we updated more recently than local, pull the file
+    // remote we updated more recently than local, pull the f45ile
     // TODO: store last sync time to detect conflicts when both were edited
     // TODO: do this in the list section if possible?
     qDebug() << "getting" << localPath << lastModified << info.lastModified();
+    // if (info.lastModified().toSecsSinceEpoch() > syncTime &&
+    //     lastModified.toSecsSinceEpoch() > syncTime) {
+    //         qDebug() << "merge conflict possible" << localPath;
+    if (info.lastModified().toSecsSinceEpoch() > syncTime &&
+            lastModified.toSecsSinceEpoch() > syncTime) {
+        qDebug() << "checking merge conflict";
+        if (file.open(QIODevice::ReadOnly)) {
+            // check if it's just the same file
+            if (file.readAll() == remoteData) {
+                qDebug() << "same file";
+                mSettings.setValue(relativePath,
+                    qMax(info.lastModified().toSecsSinceEpoch(), lastModified.toSecsSinceEpoch()));
+                return;
+            }
+            file.close();
+        }
+    }
+
     if (info.lastModified() < lastModified) {
-        if (file.open(QIODevice::WriteOnly)) {// | QIODevice::Text)) {
-            file.write(reply->readAll());
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(remoteData);
             qDebug() << "setting file time" << localPath << lastModified << info.lastModified();
             if (!file.setFileTime(lastModified, QFileDevice::FileModificationTime)) {
                 qDebug() << "failed to update time";
             }
             file.close();
+            mSettings.setValue(relativePath, lastModified.toSecsSinceEpoch());
+            emit fileUpdated(localPath);
         } else {
             qWarning("Failed to open file: %s", qUtf8Printable(localPath));
             fileWasCreated = false;

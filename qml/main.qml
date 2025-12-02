@@ -41,6 +41,9 @@ Kirigami.ApplicationWindow {
         onFileCreated: function (path) {
             treeModel.createFile(path);
         }
+        onFileUpdated: function (path) {
+            mainText.checkReload(path);
+        }
     }
 
     FolderDialog {
@@ -329,7 +332,7 @@ Kirigami.ApplicationWindow {
                 placeholderText: "Write something here..."
                 font.pixelSize: 12
                 wrapMode: TextEdit.Wrap
-                //focusPolicy: Qt.ClickFocus
+                focusPolicy: Qt.ClickFocus
                 onPressed: forceActiveFocus()
                 inputMethodHints: Qt.ImhMultiLine | Qt.ImhNoPredictiveText
 
@@ -348,6 +351,7 @@ Kirigami.ApplicationWindow {
                 function save() {
                     if (treeModel.save(mainText.path, mainText.text)) {
                         root.showPassiveNotification("Saved");
+                        syncer.putFile(mainText.path);
                     } else {
                         root.showPassiveNotification("Failed to Save");
                     }
@@ -355,6 +359,13 @@ Kirigami.ApplicationWindow {
 
                 function reload() {
                     open(path);
+                }
+
+                function checkReload(aPath) {
+                    // TODO: check for edits before put
+                    if (aPath == path) {
+                        open(aPath);
+                    }
                 }
 
                 Shortcut {
