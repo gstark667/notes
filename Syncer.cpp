@@ -9,7 +9,7 @@
 Syncer::Syncer(QObject *parent): QObject(parent) {
     mSettings.beginGroup("syncs");
 
-    connect(&mParser, SIGNAL(finished()), this, SLOT(finished()));
+    connect(&mParser, SIGNAL(finished()), this, SLOT(listFinished()));
     connect(&mParser, SIGNAL(errorChanged(QString)), this, SLOT(error(QString)));
     connect(&mWebdav, SIGNAL(errorChanged(QString)), this, SLOT(error(QString)));
 }
@@ -36,13 +36,11 @@ void Syncer::sync() {
     mParser.listDirectory(&mWebdav, "/", true);
 }
 
-void Syncer::finished() {
-    qDebug() << "Syncer: connected";
-
+void Syncer::listFinished() {
     QList<QWebdavItem> list = mParser.getList();
+    QList<QString> processed;
     QWebdavItem item;
     foreach(item, list) {
-        qDebug() << item.name() << " " << item.path() << item.lastModifiedStr();
         QString remotePath = item.path();
         // I don't like this, but slice the preceeding / from the path
         if (remotePath[0] == '/') {
@@ -50,7 +48,7 @@ void Syncer::finished() {
         }
         QDateTime remoteLastModified = item.lastModified();
         remoteLastModified.setTimeZone(QTimeZone::UTC);
-        QString localPath = QDir(mLocalRoot).filePath(remotePath);
+        QString localPath = mLocalRoot.filePath(remotePath);
         QFileInfo fileInfo(localPath);
         QDateTime localLastModified = QDateTime::fromSecsSinceEpoch(fileInfo.lastModified().toSecsSinceEpoch());
         qint64 syncTime = mSettings.value(remotePath, 0).toLongLong();
@@ -62,19 +60,32 @@ void Syncer::finished() {
                 remoteLastModified.toSecsSinceEpoch() > syncTime &&
                 localLastModified.toSecsSinceEpoch() > syncTime)) {
             // pull remote file
-            qDebug() << "pulling remote" << item.path();
             QNetworkReply *reply = mWebdav.get(item.path());
             connect(reply, SIGNAL(readyRead()), this, SLOT(itemRead()));
         } else if (remoteLastModified < localLastModified) {
             putFile(localPath);
         }
+        processed.push_back(remotePath);
+    }
+
+    // sync anything local that wasn't on the server
+    QDirIterator it(mLocalRoot, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QString path = it.next();
+        QString relativePath = mLocalRoot.relativeFilePath(path);
+        QFileInfo info(path);
+        if (info.isDir() || processed.contains(relativePath)) {
+            continue;
+        }
+        qDebug() << "uploading" << path;
+        putFile(path);
     }
 }
 
 void Syncer::putFile(QString path) {
     QFileInfo info(path);
     QFile file(path);
-    QString remotePath = QDir(mLocalRoot).relativeFilePath(path);
+    QString remotePath = mLocalRoot.relativeFilePath(path);
     if (file.open(QIODevice::ReadOnly)) {
         /*QWebdav::PropValues props;
         QMap<QString, QVariant> davProps;
@@ -91,7 +102,7 @@ void Syncer::putFile(QString path) {
 
 QString Syncer::toLocalPath(QString remotePath) {
     QString relativePath = QDir(mRootPath).relativeFilePath(remotePath);
-    return QDir(mLocalRoot).filePath(relativePath);
+    return mLocalRoot.filePath(relativePath);
 }
 
 void Syncer::itemRead()
@@ -101,7 +112,7 @@ void Syncer::itemRead()
         return;
 
     QString relativePath = QDir(mRootPath).relativeFilePath(reply->url().path());
-    QString localPath = QDir(mLocalRoot).filePath(relativePath);
+    QString localPath = mLocalRoot.filePath(relativePath);
     QFileInfo info(localPath);
     QDir parentDir = info.dir();
     QByteArray remoteData = reply->readAll();

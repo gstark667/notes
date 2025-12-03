@@ -28,7 +28,7 @@ signals:
     void fileUpdated(QString path);
 
 public slots:
-    void finished();
+    void listFinished();
     //void getFile(QString path);
     void putFile(QString path);
     void itemRead();
@@ -47,7 +47,7 @@ private:
     QString mPassword;
 
     QString mRootPath;
-    QString mLocalRoot;
+    QDir mLocalRoot;
 };
 
 #endif
