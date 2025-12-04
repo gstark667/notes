@@ -31,8 +31,10 @@ public slots:
     void listFinished();
     //void getFile(QString path);
     void putFile(QString path);
+    void putDir(QString startPath, QSet<QString> ignore = {});
     void itemRead();
     void itemWritten();
+    void dirCreated();
     void error(QString message);
 
 private:

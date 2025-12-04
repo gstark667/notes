@@ -38,7 +38,7 @@ void Syncer::sync() {
 
 void Syncer::listFinished() {
     QList<QWebdavItem> list = mParser.getList();
-    QList<QString> processed;
+    QSet<QString> remotePaths;
     QWebdavItem item;
     foreach(item, list) {
         QString remotePath = item.path();
@@ -46,6 +46,7 @@ void Syncer::listFinished() {
         if (remotePath[0] == '/') {
             remotePath = remotePath.slice(1);
         }
+        remotePaths.insert(remotePath);
         QDateTime remoteLastModified = item.lastModified();
         remoteLastModified.setTimeZone(QTimeZone::UTC);
         QString localPath = mLocalRoot.filePath(remotePath);
@@ -65,21 +66,10 @@ void Syncer::listFinished() {
         } else if (remoteLastModified < localLastModified) {
             putFile(localPath);
         }
-        processed.push_back(remotePath);
     }
 
     // sync anything local that wasn't on the server
-    QDirIterator it(mLocalRoot, QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        QString path = it.next();
-        QString relativePath = mLocalRoot.relativeFilePath(path);
-        QFileInfo info(path);
-        if (info.isDir() || processed.contains(relativePath)) {
-            continue;
-        }
-        qDebug() << "uploading" << path;
-        putFile(path);
-    }
+    putDir(mLocalRoot.path(), remotePaths);
 }
 
 void Syncer::putFile(QString path) {
@@ -97,6 +87,38 @@ void Syncer::putFile(QString path) {
         mSettings.setValue(remotePath, info.lastModified().toSecsSinceEpoch());
         //QNetworkReply *reply = mWebdav.proppatch(item.path(), props);
         connect(reply, SIGNAL(finished()), this, SLOT(itemWritten()));
+    }
+}
+
+void Syncer::putDir(QString startPath, QSet<QString> ignore) {
+    // assumes MKCOL has been called and we're just uploading files and triggering more MKCOLs here
+    QSet<QString> mkcols;
+    QDirIterator it(startPath, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QString path = it.next();
+        QString relativePath = mLocalRoot.relativeFilePath(path);
+        QFileInfo info(path);
+        if (info.isDir()) {
+            if (!info.isHidden() && !ignore.contains(relativePath + "/")) {
+                QString parentDir = info.absoluteDir().path();
+                if (mkcols.contains(parentDir)) {
+                    mkcols.insert(path);
+                    continue;
+                }
+                QNetworkReply *reply = mWebdav.mkdir("/" + mLocalRoot.relativeFilePath(path));
+                connect(reply, SIGNAL(finished()), this, SLOT(dirCreated()));
+                mkcols.insert(path);
+            }
+            continue;
+        }
+        if (ignore.contains(relativePath)) {
+            continue;
+        }
+        // upload the file if it's not in a directory we're creating
+        QString parentDir = info.absoluteDir().path();
+        if (!mkcols.contains(parentDir)) {
+            putFile(path);
+        }
     }
 }
 
@@ -176,6 +198,16 @@ void Syncer::itemWritten() {
     if (reply == 0)
         return;
     qDebug() << "itemWritten" << reply->url().path() << reply->readAll();
+}
+
+void Syncer::dirCreated() {
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    if (reply == 0)
+        return;
+    qDebug() << "dirCreated" << reply->url().path() << reply->readAll();
+    QString relativePath = QDir(mRootPath).relativeFilePath(reply->url().path());
+    QString localPath = mLocalRoot.filePath(relativePath);
+    putDir(localPath);
 }
 
 void Syncer::error(QString message) {
