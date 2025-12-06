@@ -6,6 +6,8 @@
 
 #include <QtMinMax>
 
+#include "Diff.h"
+
 Syncer::Syncer(QObject *parent): QObject(parent) {
     mSettings.beginGroup("syncs");
 
@@ -159,16 +161,21 @@ void Syncer::itemRead()
     //         qDebug() << "merge conflict possible" << localPath;
     if (info.lastModified().toSecsSinceEpoch() > syncTime &&
             lastModified.toSecsSinceEpoch() > syncTime) {
-        qDebug() << "checking merge conflict";
         if (file.open(QIODevice::ReadOnly)) {
             // check if it's just the same file
-            if (file.readAll() == remoteData) {
+            auto localData = file.readAll();
+            if (localData == remoteData) {
                 qDebug() << "same file";
                 mSettings.setValue(relativePath,
                     qMax(info.lastModified().toSecsSinceEpoch(), lastModified.toSecsSinceEpoch()));
+                file.close();
+                return;
+            } else {
+                qDebug() << "merge conflict" << localData << remoteData;
+                diff(localData, remoteData);
+                file.close();
                 return;
             }
-            file.close();
         }
     }
 

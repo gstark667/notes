@@ -351,7 +351,7 @@ Kirigami.ApplicationWindow {
                 function save() {
                     if (treeModel.save(mainText.path, mainText.text)) {
                         root.showPassiveNotification("Saved");
-                        syncer.putFile(mainText.path);
+                        //syncer.putFile(mainText.path); TODO: check for remote changes
                     } else {
                         root.showPassiveNotification("Failed to Save");
                     }
