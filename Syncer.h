@@ -19,9 +19,13 @@ public:
     Q_INVOKABLE void open(QString url, QString username, QString password);
     Q_INVOKABLE void sync();
 
-    void setPath(QString path) { mLocalRoot = path; };
+    void setPath(QString path) {
+        mLocalRoot = path;
+        mHistoryRoot = QDir(mLocalRoot.filePath(".history"));
+    };
 
     QString toLocalPath(QString remotePath);
+    QString historyPath(QString path);
 
 signals:
     void fileCreated(QString path);
@@ -32,6 +36,8 @@ public slots:
     //void getFile(QString path);
     void putFile(QString path);
     void putDir(QString startPath, QSet<QString> ignore = {});
+    void makeHistory(QString path);
+    QByteArray getHistory(QString path);
     void itemRead();
     void itemWritten();
     void dirCreated();
@@ -50,6 +56,7 @@ private:
 
     QString mRootPath;
     QDir mLocalRoot;
+    QDir mHistoryRoot;
 };
 
 #endif

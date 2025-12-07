@@ -129,6 +129,34 @@ QString Syncer::toLocalPath(QString remotePath) {
     return mLocalRoot.filePath(relativePath);
 }
 
+QString Syncer::historyPath(QString path) {
+    QString relativePath = mLocalRoot.relativeFilePath(path);
+    return mHistoryRoot.filePath(relativePath);
+}
+
+void Syncer::makeHistory(QString path) {
+    qDebug() << "copying" << mHistoryRoot << historyPath(path);
+    QString backupPath = historyPath(path);
+    QFileInfo info(backupPath);
+    info.dir().mkpath(".");
+
+    QFile::copy(path, backupPath);
+}
+
+QByteArray Syncer::getHistory(QString path) {
+    QString backupPath = historyPath(path);
+    QFileInfo info(backupPath);
+    info.dir().mkpath(".");
+
+    QFile file(backupPath);
+    QByteArray data;
+    if (file.open(QIODevice::ReadOnly)) {
+        data = file.readAll();
+        file.close();
+    }
+    return data;
+}
+
 void Syncer::itemRead()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
@@ -169,10 +197,12 @@ void Syncer::itemRead()
                 mSettings.setValue(relativePath,
                     qMax(info.lastModified().toSecsSinceEpoch(), lastModified.toSecsSinceEpoch()));
                 file.close();
+                makeHistory(localPath);
                 return;
             } else {
                 qDebug() << "merge conflict" << localData << remoteData;
-                diff(localData, remoteData);
+                auto common = getHistory(localPath);
+                diff3(common, localData, remoteData);
                 file.close();
                 return;
             }
@@ -188,6 +218,7 @@ void Syncer::itemRead()
             }
             file.close();
             mSettings.setValue(relativePath, lastModified.toSecsSinceEpoch());
+            makeHistory(localPath);
             emit fileUpdated(localPath);
         } else {
             qWarning("Failed to open file: %s", qUtf8Printable(localPath));
