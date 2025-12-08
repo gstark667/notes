@@ -6,7 +6,7 @@
 
 #include <QtMinMax>
 
-#include "Diff.h"
+#include "DiffModel.h"
 
 Syncer::Syncer(QObject *parent): QObject(parent) {
     mSettings.beginGroup("syncs");
@@ -202,8 +202,9 @@ void Syncer::itemRead()
             } else {
                 qDebug() << "merge conflict" << localData << remoteData;
                 auto common = getHistory(localPath);
-                diff3(common, localData, remoteData);
                 file.close();
+
+                emit mergeConflict(common, localData, remoteData);
                 return;
             }
         }

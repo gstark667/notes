@@ -30,6 +30,7 @@ public:
 signals:
     void fileCreated(QString path);
     void fileUpdated(QString path);
+    void mergeConflict(QByteArray common, QByteArray local, QByteArray remote);
 
 public slots:
     void listFinished();

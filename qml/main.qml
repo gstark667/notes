@@ -44,6 +44,21 @@ Kirigami.ApplicationWindow {
         onFileUpdated: function (path) {
             mainText.checkReload(path);
         }
+        onMergeConflict: function (common, local, remote) {
+            root.pageStack.push(diffLoader.item);
+            diffLoader.item.createDiff(common, local, remote);
+        }
+    }
+
+    Loader {
+        id: diffLoader
+        //active: false
+        sourceComponent: Diff {
+            id: diffPage
+            onBackRequested: {
+                root.pageStack.removePage(this);
+            }
+        }
     }
 
     FolderDialog {
@@ -294,8 +309,6 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    pageStack.initialPage: [editorPage]
-
     Kirigami.Page {
         id: editorPage
         title: "Main Page"
@@ -375,6 +388,8 @@ Kirigami.ApplicationWindow {
             }
         }
     }
+
+    pageStack.initialPage: editorPage
 
     Component.onCompleted: {
         syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);

@@ -27,6 +27,7 @@ add_subdirectory(QtWebDAV)
 
 qt_add_executable(notes
     main.cpp
+    DiffModel.cpp
     Highlighter.cpp
     Syncer.cpp
     TreeModel.cpp
@@ -39,6 +40,7 @@ qt_add_qml_module(notes
     VERSION 1.0
     QML_FILES
         qml/main.qml
+        qml/Diff.qml
     IMPORTS
         QtQuick.Controls
         org.kde.kirigami

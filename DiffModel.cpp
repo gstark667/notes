@@ -1,29 +1,48 @@
-#include <QList>
-#include <QPair>
-#include <QSet>
-#include <QByteArray>
+#include "DiffModel.h"
+#include <qnamespace.h>
 
-#include <qlogging.h>
+DiffModel::DiffModel(QObject *parent):
+    QAbstractListModel(parent) {
+}
 
-#include <string>
-#include <iostream>
+QHash<int, QByteArray> DiffModel::roleNames() const {
+    QHash<int, QByteArray> roles;
+    roles[Qt::DisplayRole] = "conflicting";
+    roles[Qt::DisplayRole+1] = "display";
+    roles[Qt::DisplayRole+2] = "leftContent";
+    roles[Qt::DisplayRole+3] = "rightContent";
+    return roles;
+}
 
-enum DiffAction {
-    NO_CHANGE,
-    ADD,
-    REMOVE
+int DiffModel::rowCount(const QModelIndex &parent) const {
+    return mDiff.size();
+}
+
+QVariant DiffModel::data(const QModelIndex &index, int role) const {
+    auto &item = mDiff[index.row()];
+    if (role == Qt::DisplayRole) {
+        return item.conflicting;
+    } else if (role == Qt::DisplayRole+1) {
+        return item.data;
+    } else if (role == Qt::DisplayRole+2) {
+        return item.left;
+    } else if (role == Qt::DisplayRole+3) {
+        return item.right;
+    }
+    return "";
+}
+
+void DiffModel::setDiff(QList<MergeItem> aDiff) {
+    beginResetModel();
+    mDiff = aDiff;
+    endResetModel();
+
+    emit diffCreated();
 };
 
-struct DiffChange {
-    DiffAction action;
-    QByteArray line;
-};
-
-struct DiffState {
-    QList<DiffChange> changes;
-    size_t x;
-    size_t y;
-};
+void DiffModel::createDiff(QByteArray common, QByteArray local, QByteArray remote) {
+    setDiff(diff3(common, local, remote));
+}
 
 QString actionString(DiffAction action) {
     switch (action) {
@@ -148,7 +167,7 @@ DiffState diff(QByteArray oldData, QByteArray newData) {
     return result;
 }
 
-void diff3(QByteArray common, QByteArray local, QByteArray remote) {
+QList<MergeItem> diff3(QByteArray common, QByteArray local, QByteArray remote) {
     qDebug() << "==== Local Changes ===";
     auto localDiff = diff(common, local);
     qDebug() << "=== Remote Changes ===";
@@ -157,8 +176,10 @@ void diff3(QByteArray common, QByteArray local, QByteArray remote) {
     auto &lChanges = localDiff.changes;
     auto &rChanges = remoteDiff.changes;
 
-    QString left;
-    QString right;
+    QByteArray left;
+    QByteArray right;
+
+    QList<MergeItem> output;
 
     size_t rPos = 0;
     for (size_t l = 0; l < lChanges.size(); ++l) {
@@ -190,11 +211,14 @@ void diff3(QByteArray common, QByteArray local, QByteArray remote) {
                 qDebug() << "========";
                 qDebug() << right;
                 qDebug() << ">>>>>>>>";
+                output.push_back({true, "", left, right});
                 //qDebug() << "conflict" << left << right;
             } else if (left != "") {
                 qDebug() /*<< "using left"*/ << left;
+                output.push_back({false, left});
             } else if (right != "") {
                 qDebug() /*<< "using right"*/ << right;
+                output.push_back({false, right});
             }
             left = "";
             right = "";
@@ -202,15 +226,9 @@ void diff3(QByteArray common, QByteArray local, QByteArray remote) {
             //qDebug() << "same" << actionString(lChange.action) << lChange.line;
             if (lChange.action != DiffAction::REMOVE) {
                 qDebug() << lChange.line;
+                output.push_back({false, lChange.line});
             }
         }
     }
-
-    /*for (auto lChange: localDiff.changes) {
-        for (auto rChange: remoteDiff.changes) {
-            if (lChange.line == rChange.line && lChange.action == rChange.action) {
-                qDebug() << "same" << lChange.line;
-            }
-        }
-        }*/
+    return output;
 }
