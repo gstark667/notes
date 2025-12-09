@@ -50,13 +50,16 @@ Kirigami.Page {
             required property string display
             required property string leftContent
             required property string rightContent
-            Text {
+            required property int index
+            TextArea {
                 text: parent.display
+                width: mergeListView.width
                 visible: !parent.conflicting
             }
             Button {
                 text: "use left"
                 visible: parent.conflicting
+                onClicked: diffModel.mergeLeft(parent.index)
             }
             Text {
                 text: parent.leftContent
@@ -65,6 +68,7 @@ Kirigami.Page {
             Button {
                 text: "use right"
                 visible: parent.conflicting
+                onClicked: diffModel.mergeRight(parent.index)
             }
             Text {
                 text: parent.rightContent

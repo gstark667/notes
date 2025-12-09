@@ -38,10 +38,26 @@ void DiffModel::setDiff(QList<MergeItem> aDiff) {
     endResetModel();
 
     emit diffCreated();
-};
+}
 
 void DiffModel::createDiff(QByteArray common, QByteArray local, QByteArray remote) {
     setDiff(diff3(common, local, remote));
+}
+
+void DiffModel::mergeLeft(int index) {
+    auto &diff = mDiff[index];
+    qDebug() << "use left" << diff.left;
+    diff.data = diff.left;
+    diff.conflicting = false;
+    dataChanged(createIndex(index, 0), createIndex(index, 0));
+}
+
+void DiffModel::mergeRight(int index) {
+    auto &diff = mDiff[index];
+    qDebug() << "use right" << diff.right;
+    diff.data = diff.right;
+    diff.conflicting = false;
+    dataChanged(createIndex(index, 0), createIndex(index, 0));
 }
 
 QString actionString(DiffAction action) {

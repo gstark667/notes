@@ -52,7 +52,6 @@ Kirigami.ApplicationWindow {
 
     Loader {
         id: diffLoader
-        //active: false
         sourceComponent: Diff {
             id: diffPage
             onBackRequested: {

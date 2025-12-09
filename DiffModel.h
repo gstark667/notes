@@ -55,6 +55,8 @@ public:
 
 public slots:
     void createDiff(QByteArray common, QByteArray local, QByteArray remote);
+    void mergeLeft(int index);
+    void mergeRight(int index);
 
 signals:
     void diffCreated();
