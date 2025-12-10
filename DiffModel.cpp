@@ -50,6 +50,7 @@ void DiffModel::mergeLeft(int index) {
     diff.data = diff.left;
     diff.conflicting = false;
     dataChanged(createIndex(index, 0), createIndex(index, 0));
+    checkStatus();
 }
 
 void DiffModel::mergeRight(int index) {
@@ -58,6 +59,35 @@ void DiffModel::mergeRight(int index) {
     diff.data = diff.right;
     diff.conflicting = false;
     dataChanged(createIndex(index, 0), createIndex(index, 0));
+    checkStatus();
+}
+
+void DiffModel::checkStatus() {
+    bool isResolved = true;
+    for (auto &conflict: mDiff) {
+        isResolved &= !conflict.conflicting;
+    }
+    if (isResolved) {
+        emit resolved();
+    }
+}
+
+QByteArray DiffModel::getData() {
+    QByteArray output;
+    for (size_t i = 0; i < mDiff.size(); ++i) {
+        if (i > 0) {
+            output += "\n";
+        }
+        auto &diff = mDiff[i];
+        if (diff.data != "") {
+            output += diff.data;
+        } else if (diff.left != "") {
+            output += diff.left;
+        } else {
+            output += diff.right;
+        }
+    }
+    return output;
 }
 
 QString actionString(DiffAction action) {
@@ -120,13 +150,7 @@ DiffState findPath(QList<QList<bool>> grid, QList<QByteArray> removes, QList<QBy
 
 DiffState diff(QByteArray oldData, QByteArray newData) {
     auto removes = oldData.split('\n');
-    for (size_t i = 0; i < removes.size() - 1; ++i) {
-        removes[i].append('\n');
-    }
     auto adds    = newData.split('\n');
-    for (size_t i = 0; i < adds.size() - 1; ++i) {
-        adds[i].append('\n');
-    }
 
     // build the grid
     QList<QList<bool>> grid;
@@ -192,8 +216,12 @@ QList<MergeItem> diff3(QByteArray common, QByteArray local, QByteArray remote) {
     auto &lChanges = localDiff.changes;
     auto &rChanges = remoteDiff.changes;
 
+    bool leftStarted = false;
     QByteArray left;
+    bool rightStarted = false;
     QByteArray right;
+    bool centerStarted = false;
+    QByteArray center;
 
     QList<MergeItem> output;
 
@@ -207,6 +235,10 @@ QList<MergeItem> diff3(QByteArray common, QByteArray local, QByteArray remote) {
                 for (size_t tmp = rPos; tmp < r; ++tmp) {
                     //qDebug() << "right" << actionString(rChanges[tmp].action) << rChanges[tmp].line;
                     if (rChanges[tmp].action != DiffAction::REMOVE) {
+                        if (rightStarted) {
+                            right += "\n";
+                        }
+                        rightStarted = true;
                         right += rChanges[tmp].line;
                     }
                 }
@@ -218,7 +250,17 @@ QList<MergeItem> diff3(QByteArray common, QByteArray local, QByteArray remote) {
         if (!match) {
             //qDebug() << "left" << actionString(lChange.action) << lChange.line;
             if (lChange.action != DiffAction::REMOVE) {
+                if (leftStarted) {
+                    left += "\n";
+                }
+                leftStarted = true;
                 left += lChange.line;
+            }
+
+            if (centerStarted) {
+                output.push_back({false, center});
+                center = "";
+                centerStarted = false;
             }
         } else {
             if (left != "" && right != "") {
@@ -237,14 +279,23 @@ QList<MergeItem> diff3(QByteArray common, QByteArray local, QByteArray remote) {
                 output.push_back({false, right});
             }
             left = "";
+            leftStarted = false;
             right = "";
+            rightStarted = false;
 
             //qDebug() << "same" << actionString(lChange.action) << lChange.line;
             if (lChange.action != DiffAction::REMOVE) {
                 qDebug() << lChange.line;
-                output.push_back({false, lChange.line});
+                if (centerStarted) {
+                    center += "\n";
+                }
+                centerStarted = true;
+                center += lChange.line;
             }
         }
+    }
+    if (centerStarted) {
+        output.push_back({false, center});
     }
     return output;
 }

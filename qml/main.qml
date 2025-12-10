@@ -59,6 +59,12 @@ Kirigami.ApplicationWindow {
             }
         }
     }
+    Connections {
+        target: diffLoader.item
+        onDiffResolved: function (data) {
+            console.log(data);
+        }
+    }
 
     FolderDialog {
         id: fileDialog

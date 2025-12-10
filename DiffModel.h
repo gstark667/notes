@@ -12,6 +12,7 @@
 #include <qlogging.h>
 
 #include <qt/QtCore/qglobal.h>
+#include <qtmetamacros.h>
 #include <string>
 #include <iostream>
 
@@ -53,6 +54,8 @@ public:
 
     void setDiff(QList<MergeItem> aDiff);
 
+    Q_INVOKABLE QByteArray getData();
+
 public slots:
     void createDiff(QByteArray common, QByteArray local, QByteArray remote);
     void mergeLeft(int index);
@@ -60,9 +63,12 @@ public slots:
 
 signals:
     void diffCreated();
+    void resolved();
 
 private:
     QList<MergeItem> mDiff;
+
+    void checkStatus();
 };
 
 QString actionString(DiffAction action);

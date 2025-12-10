@@ -15,12 +15,16 @@ Kirigami.Page {
     width: parent.width
     height: parent.height
 
+    signal diffResolved(data: string)
+
     DiffModel {
         id: diffModel
+        onResolved: saveAction.enabled = true
     }
 
     function createDiff(common, local, remote) {
         diffModel.createDiff(common, local, remote);
+        saveAction.enabled = false;
     }
 
     footer: ColumnLayout {
@@ -35,6 +39,13 @@ Kirigami.Page {
                 Kirigami.Action {
                     text: "Keep Local"
                     icon.name: "cloud-upload"
+                },
+                Kirigami.Action {
+                    id: saveAction
+                    text: "Save"
+                    icon.name: "save"
+                    enabled: false
+                    onTriggered: diffPage.diffResolved(diffModel.getData())
                 }
             ]
         }
