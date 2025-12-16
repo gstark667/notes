@@ -2,7 +2,7 @@
 
 
 TreeItem::TreeItem(QString data, QString path, bool isDirectory, TreeItem *parent)
-    : mData(data), mPath(path), mIsDirectory(isDirectory), mParentItem(parent) {}
+    : mData(data), mPath(path), mIsDirectory(isDirectory), mConflict(false), mParentItem(parent) {}
 
 
 TreeItem::~TreeItem() {

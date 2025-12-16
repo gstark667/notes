@@ -1,12 +1,11 @@
 #include "Syncer.h"
 #include "qwebdav.h"
+#include <qfileinfo.h>
 #include <qnetworkreply.h>
 #include <qobject.h>
 #include <qurl.h>
 
 #include <QtMinMax>
-
-#include "DiffModel.h"
 
 Syncer::Syncer(QObject *parent): QObject(parent) {
     mSettings.beginGroup("syncs");
@@ -135,7 +134,6 @@ QString Syncer::historyPath(QString path) {
 }
 
 void Syncer::makeHistory(QString path) {
-    qDebug() << "copying" << mHistoryRoot << historyPath(path);
     QString backupPath = historyPath(path);
     QFileInfo info(backupPath);
     info.dir().mkpath(".");
@@ -148,7 +146,45 @@ QByteArray Syncer::getHistory(QString path) {
     QFileInfo info(backupPath);
     info.dir().mkpath(".");
 
-    QFile file(backupPath);
+    return getFile(backupPath);
+}
+
+QString Syncer::conflictPath(QString path) {
+    QString relativePath = mLocalRoot.relativeFilePath(path);
+    return mConflictRoot.filePath(relativePath);
+}
+
+void Syncer::makeConflict(QString path, QByteArray data) {
+    QString cPath = conflictPath(path);
+    QFileInfo info(cPath);
+    info.dir().mkpath(".");
+
+    QFile file(cPath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(data);
+        file.close();
+    }
+}
+
+void Syncer::resolveConflict(QString path, QByteArray data) {
+    QFile cFile(conflictPath(path));
+    cFile.remove();
+
+    QFile file(path);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(data);
+        file.close();
+
+        putFile(path);
+    }
+}
+
+QByteArray Syncer::getConflict(QString path) {
+    return getFile(conflictPath(path));
+}
+
+QByteArray Syncer::getFile(QString path) {
+    QFile file(path);
     QByteArray data;
     if (file.open(QIODevice::ReadOnly)) {
         data = file.readAll();
@@ -180,31 +216,21 @@ void Syncer::itemRead()
     qint64 syncTime = mSettings.value(relativePath, 0).toLongLong();
 
     QFile file(localPath);
-    // remote we updated more recently than local, pull the f45ile
-    // TODO: store last sync time to detect conflicts when both were edited
-    // TODO: do this in the list section if possible?
-    qDebug() << "getting" << localPath << lastModified << info.lastModified();
-    // if (info.lastModified().toSecsSinceEpoch() > syncTime &&
-    //     lastModified.toSecsSinceEpoch() > syncTime) {
-    //         qDebug() << "merge conflict possible" << localPath;
+    // remote we updated more recently than local, pull the file
     if (info.lastModified().toSecsSinceEpoch() > syncTime &&
             lastModified.toSecsSinceEpoch() > syncTime) {
         if (file.open(QIODevice::ReadOnly)) {
             // check if it's just the same file
             auto localData = file.readAll();
             if (localData == remoteData) {
-                qDebug() << "same file";
                 mSettings.setValue(relativePath,
                     qMax(info.lastModified().toSecsSinceEpoch(), lastModified.toSecsSinceEpoch()));
                 file.close();
                 makeHistory(localPath);
                 return;
             } else {
-                qDebug() << "merge conflict" << localData << remoteData;
-                auto common = getHistory(localPath);
-                file.close();
-
-                emit mergeConflict(common, localData, remoteData);
+                makeConflict(localPath, remoteData);
+                emit mergeConflict(localPath);
                 return;
             }
         }
@@ -213,7 +239,7 @@ void Syncer::itemRead()
     if (info.lastModified() < lastModified) {
         if (file.open(QIODevice::WriteOnly)) {
             file.write(remoteData);
-            qDebug() << "setting file time" << localPath << lastModified << info.lastModified();
+            //qDebug() << "setting file time" << localPath << lastModified << info.lastModified();
             if (!file.setFileTime(lastModified, QFileDevice::FileModificationTime)) {
                 qDebug() << "failed to update time";
             }
@@ -251,4 +277,13 @@ void Syncer::dirCreated() {
 
 void Syncer::error(QString message) {
     qWarning() << "Syncer: " << message;
+}
+
+
+void Syncer::openMergeConflict(QString path) {
+    QString localPath = mLocalRoot.filePath(path);
+    auto common = getHistory(localPath);
+    auto localData = getFile(path);
+    auto remoteData = getConflict(path);
+    emit conflictAvailable(path, common, localData, remoteData);
 }

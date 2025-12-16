@@ -49,6 +49,7 @@ public:
 
 public slots:
     void createFile(QString path);
+    void mergeConflict(QString path, bool conflict);
 
 signals:
     void pathChanged(QString path);

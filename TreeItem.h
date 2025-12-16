@@ -15,6 +15,7 @@ public:
     void insertChild(TreeItem *child, size_t row);
     void appendChild(TreeItem *child);
     void removeChild(size_t row);
+    void setConflict(bool conflict) { mConflict = conflict; };
 
     TreeItem *child(int row);
     TreeItem *find(QString data);
@@ -24,12 +25,14 @@ public:
     bool isDirectory() const { return mIsDirectory; };
     int row() const;
     TreeItem *parentItem() { return mParentItem; };
+    bool isConflict() const { return mConflict; };
 
 private:
     std::vector<TreeItem*> mChildItems;
     QString mData;
     QString mPath;
     bool mIsDirectory;
+    bool mConflict;
     TreeItem *mParentItem;
 };
 

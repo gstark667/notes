@@ -44,9 +44,12 @@ Kirigami.ApplicationWindow {
         onFileUpdated: function (path) {
             mainText.checkReload(path);
         }
-        onMergeConflict: function (common, local, remote) {
+        onMergeConflict: function (path) {
+            treeModel.mergeConflict(path, true);
+        }
+        onConflictAvailable: function (path, common, local, remote) {
             root.pageStack.push(diffLoader.item);
-            diffLoader.item.createDiff(common, local, remote);
+            diffLoader.item.createDiff(path, common, local, remote);
         }
     }
 
@@ -55,14 +58,16 @@ Kirigami.ApplicationWindow {
         sourceComponent: Diff {
             id: diffPage
             onBackRequested: {
-                root.pageStack.removePage(this);
+                root.pageStack.removePage(diffLoader.item);
             }
         }
     }
     Connections {
         target: diffLoader.item
-        onDiffResolved: function (data) {
-            console.log(data);
+        onDiffResolved: function (path, data) {
+            syncer.resolveConflict(path, data);
+            treeModel.mergeConflict(path, false);
+            root.pageStack.removePage(diffLoader.item);
         }
     }
 
@@ -293,6 +298,9 @@ Kirigami.ApplicationWindow {
                 delegate: TreeViewDelegate {
                     text: model.display
                     implicitWidth: treeScrollView.width
+                    background: Rectangle {
+                        color: model.isConflict ? "red" : "transparent"
+                    }
 
                     TapHandler {
                         acceptedButtons: Qt.RightButton
@@ -303,7 +311,11 @@ Kirigami.ApplicationWindow {
                     TapHandler {
                         onTapped: {
                             if (!model.isDirectory) {
-                                mainText.open(model.path);
+                                if (model.isConflict) {
+                                    syncer.openMergeConflict(model.path);
+                                } else {
+                                    mainText.open(model.path);
+                                }
                             }
                             fileTree.selectionModel.setCurrentIndex(fileTree.index(model.index, 0), ItemSelectionModel.NoUpdate);
                         }

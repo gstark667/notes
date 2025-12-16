@@ -4,6 +4,7 @@
 #include <QQmlEngine>
 
 #include <qtmetamacros.h>
+#include <qurl.h>
 #include <qwebdav.h>
 #include <qwebdavdirparser.h>
 #include <qwebdavitem.h>
@@ -22,27 +23,34 @@ public:
     void setPath(QString path) {
         mLocalRoot = path;
         mHistoryRoot = QDir(mLocalRoot.filePath(".history"));
+        mConflictRoot = QDir(mLocalRoot.filePath(".conflict"));
     };
 
     QString toLocalPath(QString remotePath);
     QString historyPath(QString path);
+    QString conflictPath(QString path);
 
 signals:
     void fileCreated(QString path);
     void fileUpdated(QString path);
-    void mergeConflict(QByteArray common, QByteArray local, QByteArray remote);
+    void mergeConflict(QString path);
+    void conflictAvailable(QString path, QByteArray common, QByteArray local, QByteArray remote);
 
 public slots:
     void listFinished();
-    //void getFile(QString path);
     void putFile(QString path);
     void putDir(QString startPath, QSet<QString> ignore = {});
     void makeHistory(QString path);
     QByteArray getHistory(QString path);
+    void makeConflict(QString path, QByteArray data);
+    QByteArray getConflict(QString path);
+    void resolveConflict(QString path, QByteArray data);
+    QByteArray getFile(QString path);
     void itemRead();
     void itemWritten();
     void dirCreated();
     void error(QString message);
+    void openMergeConflict(QString path);
 
 private:
     QWebdav mWebdav;
@@ -58,6 +66,7 @@ private:
     QString mRootPath;
     QDir mLocalRoot;
     QDir mHistoryRoot;
+    QDir mConflictRoot;
 };
 
 #endif

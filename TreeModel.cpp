@@ -28,6 +28,7 @@ QHash<int, QByteArray> TreeModel::roleNames() const {
     roles[Qt::DisplayRole] = "display";
     roles[Qt::UserRole]    = "path";
     roles[Qt::UserRole+1]  = "isDirectory";
+    roles[Qt::UserRole+2]  = "isConflict";
     return roles;
 }
 
@@ -46,6 +47,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
         return item->path();
     } else if (role == Qt::UserRole + 1) { // isDirectory
         return item->isDirectory();
+    } else if (role == Qt::UserRole + 2) { // isConflict
+        return item->isConflict();
     }
     return {};
 }
@@ -291,4 +294,11 @@ void TreeModel::createFile(QString path) {
 
         curr = next;
     }
+}
+
+
+void TreeModel::mergeConflict(QString path, bool conflict) {
+    auto item = find(path);
+    item->setConflict(conflict);
+    dataChanged(createIndex(item->row(), 0, item), createIndex(item->row(), 0, item));
 }

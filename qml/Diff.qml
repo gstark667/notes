@@ -15,14 +15,17 @@ Kirigami.Page {
     width: parent.width
     height: parent.height
 
-    signal diffResolved(data: string)
+    property string path
+
+    signal diffResolved(path: string, data: string)
 
     DiffModel {
         id: diffModel
         onResolved: saveAction.enabled = true
     }
 
-    function createDiff(common, local, remote) {
+    function createDiff(path, common, local, remote) {
+        diffPage.path = path;
         diffModel.createDiff(common, local, remote);
         saveAction.enabled = false;
     }
@@ -45,7 +48,7 @@ Kirigami.Page {
                     text: "Save"
                     icon.name: "save"
                     enabled: false
-                    onTriggered: diffPage.diffResolved(diffModel.getData())
+                    onTriggered: diffPage.diffResolved(diffPage.path, diffModel.getData())
                 }
             ]
         }
