@@ -10,10 +10,7 @@
 #include <QQmlEngine>
 
 #include <qlogging.h>
-
 #include <qtmetamacros.h>
-#include <string>
-#include <iostream>
 
 enum DiffAction {
     NO_CHANGE,
@@ -54,7 +51,7 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     void setDiff(QList<MergeItem> aDiff);
-    void setConflicting(bool aConflicting) { mConflicting = aConflicting; qDebug() << "set conflicting" << aConflicting; };
+    void setConflicting(bool aConflicting);
     bool isConflicting() { return mConflicting; };
 
     Q_INVOKABLE QByteArray getData();

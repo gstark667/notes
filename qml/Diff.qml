@@ -23,7 +23,6 @@ Kirigami.Page {
         id: diffModel
         onConflictingChanged: {
             saveAction.enabled = !diffModel.conflicting;
-            console.log("conflicting", diffModel.conflicting, saveAction.enabled);
         }
     }
 

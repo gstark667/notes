@@ -23,6 +23,11 @@ Kirigami.ApplicationWindow {
         property string webdavPassword
     }
 
+    SystemPalette {
+        id: sysPalette
+        colorGroup: SystemPalette.Active
+    }
+
     TreeModel {
         id: treeModel
         path: settings.notesDir
@@ -64,7 +69,7 @@ Kirigami.ApplicationWindow {
     }
     Connections {
         target: diffLoader.item
-        onDiffResolved: function (path, data) {
+        function onDiffResolved(path, data) {
             syncer.resolveConflict(path, data);
             treeModel.mergeConflict(path, false);
             root.pageStack.removePage(diffLoader.item);
@@ -236,7 +241,7 @@ Kirigami.ApplicationWindow {
                     text: model.display
                     implicitWidth: treeScrollView.width
                     background: Rectangle {
-                        color: model.isConflict ? "red" : "transparent"
+                        color: model.isConflict ? "red" : (parent.current ? sysPalette.accent : "transparent")
                     }
 
                     TapHandler {

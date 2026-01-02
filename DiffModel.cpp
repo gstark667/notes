@@ -1,6 +1,8 @@
 #include "DiffModel.h"
 #include <qnamespace.h>
 
+#include <iostream>
+
 DiffModel::DiffModel(QObject *parent):
     QAbstractListModel(parent) {
 }
@@ -40,6 +42,14 @@ void DiffModel::setDiff(QList<MergeItem> aDiff) {
     emit diffCreated();
 
     checkStatus();
+}
+
+void DiffModel::setConflicting(bool aConflicting) {
+    bool doEmit = aConflicting != mConflicting;
+    mConflicting = aConflicting;
+    if (doEmit) {
+        emit conflictingChanged();
+    }
 }
 
 void DiffModel::createDiff(QByteArray common, QByteArray local, QByteArray remote) {
