@@ -11,7 +11,6 @@
 
 #include <qlogging.h>
 
-#include <qt/QtCore/qglobal.h>
 #include <qtmetamacros.h>
 #include <string>
 #include <iostream>
@@ -45,6 +44,8 @@ class DiffModel : public QAbstractListModel
 Q_OBJECT
 QML_ELEMENT
 
+Q_PROPERTY(bool conflicting READ isConflicting WRITE setConflicting NOTIFY conflictingChanged)
+
 public:
     DiffModel(QObject *parent = nullptr);
 
@@ -53,6 +54,8 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     void setDiff(QList<MergeItem> aDiff);
+    void setConflicting(bool aConflicting) { mConflicting = aConflicting; qDebug() << "set conflicting" << aConflicting; };
+    bool isConflicting() { return mConflicting; };
 
     Q_INVOKABLE QByteArray getData();
 
@@ -60,13 +63,21 @@ public slots:
     void createDiff(QByteArray common, QByteArray local, QByteArray remote);
     void mergeLeft(int index);
     void mergeRight(int index);
+    void update(int index, QByteArray text);
+    void useLocal();
+    void useRemote();
 
 signals:
     void diffCreated();
-    void resolved();
+    void conflictingChanged();
 
 private:
     QList<MergeItem> mDiff;
+
+    QByteArray mCommon;
+    QByteArray mLocal;
+    QByteArray mRemote;
+    bool mConflicting;
 
     void checkStatus();
 };

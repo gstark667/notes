@@ -41,6 +41,7 @@ qt_add_qml_module(notes
     QML_FILES
         qml/main.qml
         qml/Diff.qml
+        qml/SettingsMenu.qml
     IMPORTS
         QtQuick.Controls
         org.kde.kirigami

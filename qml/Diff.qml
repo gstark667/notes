@@ -21,13 +21,16 @@ Kirigami.Page {
 
     DiffModel {
         id: diffModel
-        onResolved: saveAction.enabled = true
+        onConflictingChanged: {
+            saveAction.enabled = !diffModel.conflicting;
+            console.log("conflicting", diffModel.conflicting, saveAction.enabled);
+        }
     }
 
     function createDiff(path, common, local, remote) {
         diffPage.path = path;
         diffModel.createDiff(common, local, remote);
-        saveAction.enabled = false;
+        saveAction.enabled = !diffModel.conflicting;
     }
 
     footer: ColumnLayout {
@@ -38,16 +41,18 @@ Kirigami.Page {
                 Kirigami.Action {
                     text: "Keep Remote"
                     icon.name: "cloud-download"
+                    onTriggered: diffModel.useRemote()
                 },
                 Kirigami.Action {
                     text: "Keep Local"
                     icon.name: "cloud-upload"
+                    onTriggered: diffModel.useLocal()
                 },
                 Kirigami.Action {
                     id: saveAction
                     text: "Save"
                     icon.name: "save"
-                    enabled: false
+                    enabled: !diffModel.conflicting
                     onTriggered: diffPage.diffResolved(diffPage.path, diffModel.getData())
                 }
             ]
@@ -69,6 +74,7 @@ Kirigami.Page {
                 text: parent.display
                 width: mergeListView.width
                 visible: !parent.conflicting
+                onTextChanged: diffModel.update(parent.index, text)
             }
             Button {
                 text: "use left"

@@ -127,77 +127,14 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    Kirigami.PromptDialog {
+    SettingsMenu {
         id: settingsMenu
-        title: "Settings"
 
-        standardButtons: Kirigami.Dialog.NoButton
-        customFooterActions: [
-            Kirigami.Action {
-                text: "Accept"
-                icon.name: "dialog-ok"
-                onTriggered: {
-                    settings.webdavUrl = webdavUrlField.text;
-                    settings.webdavUsername = webdavUsernameField.text;
-                    settings.webdavPassword = webdavPasswordField.text;
-                    syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);
-                    settingsMenu.close();
-                }
-            },
-            Kirigami.Action {
-                text: "Cancel"
-                icon.name: "dialog-cancel"
-                onTriggered: {
-                    webdavUrlField.text = settings.webdavUrl;
-                    webdavUsernameField.text = settings.webdavUsername;
-                    webdavPasswordField.text = settings.webdavPassword;
-                    settingsMenu.close();
-                }
-            }
-        ]
-
-        ColumnLayout {
-            // WebDAV
-            Kirigami.FormLayout {
-                Layout.fillWidth: true
-                Kirigami.Separator {
-                    Kirigami.FormData.isSection: true
-                    Kirigami.FormData.label: "WebDAV Settings"
-                }
-                TextField {
-                    id: webdavUrlField
-                    Kirigami.FormData.label: "URL:"
-                    text: settings.webdavUrl
-                    placeholderText: "https://example.com/webdav"
-                }
-                TextField {
-                    id: webdavUsernameField
-                    Kirigami.FormData.label: "Username:"
-                    text: settings.webdavUsername
-                    placeholderText: "username"
-                }
-                TextField {
-                    id: webdavPasswordField
-                    Kirigami.FormData.label: "Password:"
-                    text: settings.webdavPassword
-                    placeholderText: "password"
-                    echoMode: TextInput.Password
-                }
-            }
-
-            // Notes directory
-            Kirigami.FormLayout {
-                Layout.fillWidth: true
-                Kirigami.Separator {
-                    Kirigami.FormData.isSection: true
-                    Kirigami.FormData.label: "Notes Directory"
-                }
-                Button {
-                    text: "Select Directory"
-                    icon.name: "folder-open"
-                    onClicked: fileDialog.open()
-                }
-            }
+        onWebdavSettings: function (url, username, password) {
+            settings.webdavUrl = url;
+            settings.webdavUsername = username;
+            settings.webdavPassword = password;
+            syncer.open(url, username, password);
         }
     }
 
@@ -258,7 +195,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: "Settings"
                 icon.name: "settings-configure"
-                onTriggered: settingsMenu.open()
+                onTriggered: settingsMenu.doOpen(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword)
             },
             Kirigami.Action {
                 text: "Journal"
@@ -410,5 +347,6 @@ Kirigami.ApplicationWindow {
 
     Component.onCompleted: {
         syncer.open(settings.webdavUrl, settings.webdavUsername, settings.webdavPassword);
+        syncer.sync();
     }
 }
